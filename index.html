@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<link rel="manifest" href="manifest.json">
+<title>Muthu Bricks Business Manager</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f4f6f8;color:#17324d}
+header{background:#17324d;color:#fff;padding:17px 18px calc(17px + env(safe-area-inset-top));position:sticky;top:0;z-index:5}.brand{font-size:22px;font-weight:800}.sub{font-size:12px;opacity:.8}
+main{padding:16px 14px 90px;max-width:900px;margin:auto}.page{display:none}.page.active{display:block}h1{font-size:25px;margin:8px 0 4px}.muted{color:#71808f;font-size:13px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.card,.panel{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px #17324d12}.label{font-size:12px;color:#71808f}.value{font-size:20px;font-weight:800;margin-top:5px}
+button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:#1f7a4d;color:#fff}.blue{background:#1f4e79}.danger{background:#a63d40}
+input,select,textarea{width:100%;padding:12px;border:1px solid #d8e0e6;border-radius:9px;font-size:15px;margin:6px 0 10px;background:#fff}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.item{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #edf0f2;padding:12px 0}.item:last-child{border:0}.small{font-size:12px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dfe5e9;display:grid;grid-template-columns:repeat(5,1fr);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+.nav button{background:#fff;color:#52606d;border-radius:0;padding:8px 2px;font-size:10px}.nav button.active{color:#17324d;background:#eef4f8}
+.login{max-width:430px;margin:60px auto;padding:22px}.status{font-size:12px;margin-top:8px}.success{color:#1f7a4d}.warn{color:#9b6900}
+</style>
+<style>
+body{padding-bottom:82px}
+@media(max-width:700px){
+  body{font-size:15px}
+  h1{font-size:25px;margin-bottom:4px}
+  .cards{grid-template-columns:1fr 1fr!important;gap:8px}
+  .card{padding:13px 10px}
+  .card .value{font-size:20px}
+  input,select,button{min-height:46px;font-size:16px}
+  nav{position:fixed!important;bottom:0;left:0;right:0;z-index:1000;background:#fff;box-shadow:0 -2px 12px #0002;overflow-x:auto;white-space:nowrap}
+  nav button{min-width:68px;padding:6px 4px;font-size:11px}
+  .panel{border-radius:14px}
+}
+</style>
+
+</head>
+<body>
+<div id="loginPanel" class="login panel">
+<h1>Muthu Bricks</h1><div class="muted">Business Manager</div>
+<p class="small">Cloud mode is configured by the administrator. This build keeps credentials out of the source code.</p>
+<label>Email</label><input id="email" type="email" placeholder="Your login email">
+<label>Password</label><input id="password" type="password" placeholder="Password">
+<button style="width:100%" onclick="signIn()">Sign in</button>
+<div id="loginMsg" class="status"></div>
+</div>
+
+<div id="app" style="display:none">
+<header><div class="brand">MUTHU BRICKS</div><div class="sub">Business Manager • Shared Cloud</div></header>
+<main>
+
+<section id="home" class="page" style="display:block">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+  <div><h1 id="homeTitle">Muthu Bricks</h1><div class="muted" id="homeSubtitle">Business Dashboard</div></div>
+  <button class="blue" onclick="toggleLanguage()" id="langBtn">தமிழ்</button>
+</div>
+<div class="cards" id="homeCards">
+ <div class="card"><div class="label" data-en="Today Sales" data-ta="இன்றைய விற்பனை">Today Sales</div><div class="value" id="homeSales">₹0</div></div>
+ <div class="card"><div class="label" data-en="Today Collection" data-ta="இன்றைய வசூல்">Today Collection</div><div class="value" id="homeCollection">₹0</div></div>
+ <div class="card"><div class="label" data-en="Outstanding" data-ta="பெற வேண்டியது">Outstanding</div><div class="value" id="homeOutstanding">₹0</div></div>
+ <div class="card"><div class="label" data-en="Today Expenses" data-ta="இன்றைய செலவு">Today Expenses</div><div class="value" id="homeExpenses">₹0</div></div>
+</div>
+<h3 data-en="Quick Actions" data-ta="விரைவு செயல்கள்">Quick Actions</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+ <button class="blue" style="padding:18px 8px;font-size:16px" onclick="show('sale')">🧾<br><span data-en="New Sale" data-ta="புதிய விற்பனை">New Sale</span></button>
+ <button class="blue" style="padding:18px 8px;font-size:16px" onclick="show('payment')">💰<br><span data-en="Payment" data-ta="வசூல்">Payment</span></button>
+ <button class="blue" style="padding:18px 8px;font-size:16px" onclick="show('production')">🏭<br><span data-en="Production" data-ta="உற்பத்தி">Production</span></button>
+ <button class="blue" style="padding:18px 8px;font-size:16px" onclick="show('expenses')">💸<br><span data-en="Expense" data-ta="செலவு">Expense</span></button>
+</div>
+<div class="panel" style="margin-top:15px">
+ <b data-en="Today" data-ta="இன்று">Today</b>
+ <div id="homeTodayList"></div>
+</div>
+</section>
+<section id="dashboard" class="page active"><h1>Dashboard</h1><div class="muted">Shared business records</div>
+<div class="cards"><div class="card"><div class="label">Total Sales</div><div id="salesTotal" class="value">₹0</div></div><div class="card"><div class="label">Collections</div><div id="paidTotal" class="value">₹0</div></div><div class="card"><div class="label">Outstanding</div><div id="outTotal" class="value">₹0</div></div><div class="card"><div class="label">Customers</div><div id="custTotal" class="value">0</div></div></div>
+<div class="panel"><b>Quick actions</b><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button onclick="show('home')" id="n-home">🏠<br>Home</button><button onclick="show('sale')">+ New Sale</button><button class="blue" onclick="show('customer')">+ Customer</button><button class="blue" onclick="show('payment')">+ Payment</button><button class="blue" onclick="show('invoice')">🧾 Invoice</button></div></div>
+<div class="panel"><b>Connection</b><div id="connection" class="status">Checking…</div></div></section>
+
+<section id="sale" class="page"><h1>New Sale</h1><div class="muted">Create an invoice</div><div class="panel">
+<label>Customer</label><select id="saleCustomer"></select><label>Product</label><select id="product"></select>
+<div class="row"><div><label>Quantity</label><input id="qty" type="number" value="1" step=".01"></div><div><label>Rate</label><input id="rate" type="number" step=".01"></div></div>
+<button onclick="addItem()">Add item</button><div id="saleItems"></div>
+<div class="row"><div><label>Transport</label><input id="transport" type="number" value="0"></div><div><label>Discount</label><input id="discount" type="number" value="0"></div></div>
+<label>Paid now</label><input id="paid" type="number" value="0"><div class="item"><b>Total</b><b id="saleTotal">₹0</b></div>
+<button style="width:100%" onclick="saveSale()">SAVE SALE</button></div></section>
+
+<section id="customer" class="page"><h1>Customers</h1><div class="muted">Customer master and ledger</div>
+<div class="panel"><input id="cName" placeholder="Customer name"><input id="cPhone" placeholder="Phone"><textarea id="cAddress" placeholder="Site / address"></textarea><button onclick="addCustomer()">Save Customer</button></div><div id="customerList"></div></section>
+
+<section id="payment" class="page"><h1>Payment</h1><div class="muted">Record collections</div>
+<div class="panel"><label>Customer</label><select id="payCustomer"></select><label>Amount</label><input id="payAmount" type="number" step=".01"><label>Method</label><select id="payMethod"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select><input id="payNote" placeholder="Note"><button onclick="addPayment()">Save Payment</button></div>
+<div class="panel"><b>Recent payments</b><div id="paymentList"></div></div></section>
+
+
+
+<section id="invoice" class="page">
+<h1>Invoice</h1>
+<div class="muted">Select a sale and print/save as PDF</div>
+<div class="panel">
+<label>Invoice</label><select id="invoiceSelect" onchange="renderInvoice()"></select>
+<div id="invoicePreview" style="margin-top:14px"></div>
+<button class="blue" style="width:100%;margin-top:12px" onclick="printInvoice()">PRINT / SAVE PDF</button>
+</div>
+</section>
+
+<section id="ledger" class="page">
+<h1>Customer Ledger</h1>
+<div class="muted">Sales, payments and outstanding balance</div>
+<div class="panel">
+<label>Select customer</label>
+<select id="ledgerCustomer" onchange="loadLedger()"></select>
+<div class="cards" style="margin-bottom:0">
+<div class="card"><div class="label">Sales</div><div id="ledgerSales" class="value">₹0</div></div>
+<div class="card"><div class="label">Payments</div><div id="ledgerPaid" class="value">₹0</div></div>
+<div class="card"><div class="label">Balance</div><div id="ledgerBalance" class="value">₹0</div></div>
+</div>
+</div>
+<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><b>Transactions</b><button class="blue" onclick="printLedger()">Print / PDF</button></div><div id="ledgerList"></div></div>
+</section>
+
+
+<section id="production" class="page">
+<h1>Production</h1>
+<div class="muted">Record today's production</div>
+<div class="panel">
+<label>Date</label><input id="prodDate" type="date">
+<label>Product</label><select id="prodProduct"></select>
+<label>Quantity produced</label><input id="prodQty" type="number" min="0" step="0.01" placeholder="Example: 500">
+<label>Unit</label><select id="prodUnit"><option value="pieces">Pieces</option><option value="sqft">Sq.ft</option></select>
+<label>Raw material consumption (optional)</label>
+<div class="small">Enter quantities used for this production batch.</div>
+<div id="consumptionInputs"></div>
+<label>Notes</label><input id="prodNotes" placeholder="Shift / machine / remarks">
+<button class="blue" style="width:100%;margin-top:12px" onclick="saveProduction()">SAVE PRODUCTION</button>
+</div>
+<div class="panel"><b>Recent Production</b><div id="productionList"></div></div>
+</section>
+
+<section id="stock" class="page">
+<h1>Stock</h1>
+<div class="muted">Current finished-goods stock</div>
+<div id="stockCards" class="cards"></div>
+<div class="panel">
+<div style="display:flex;justify-content:space-between;align-items:center"><b>Stock Movement</b><button class="blue" onclick="loadStock()">Refresh</button></div>
+<div id="stockMovement"></div>
+</div>
+</section>
+
+
+<section id="expenses" class="page">
+<h1>Expenses</h1><div class="muted">Record business expenses</div>
+<div class="panel">
+<label>Date</label><input id="expDate" type="date">
+<label>Category</label><select id="expCategory"><option>Raw Materials</option><option>Cement</option><option>Sand / M-Sand</option><option>Chips</option><option>Diesel / Fuel</option><option>Electricity</option><option>Machine Repair</option><option>Rent</option><option>Office</option><option>Transport</option><option>Other</option></select>
+<label>Amount</label><input id="expAmount" type="number" min="0" step="0.01" placeholder="₹">
+<label>Notes</label><input id="expNotes" placeholder="Supplier / reason">
+<button class="blue" style="width:100%;margin-top:12px" onclick="saveExpense()">SAVE EXPENSE</button>
+</div>
+<div class="panel"><b>Recent Expenses</b><div id="expenseList"></div></div>
+</section>
+
+<section id="workers" class="page">
+<h1>Workers</h1><div class="muted">Worker payment register</div>
+<div class="panel">
+<label>Date</label><input id="workerDate" type="date">
+<label>Worker name</label><input id="workerName" placeholder="Worker name">
+<label>Work / role</label><input id="workerRole" placeholder="Machine / loading / mason">
+<label>Amount</label><input id="workerAmount" type="number" min="0" step="0.01" placeholder="₹">
+<label>Payment type</label><select id="workerMethod"><option>Cash</option><option>UPI</option><option>Bank</option><option>Advance</option></select>
+<label>Notes</label><input id="workerNotes" placeholder="Remarks">
+<button class="blue" style="width:100%;margin-top:12px" onclick="saveWorker()">SAVE WORKER PAYMENT</button>
+</div>
+<div class="panel"><b>Recent Worker Payments</b><div id="workerList"></div></div>
+</section>
+
+<section id="transport" class="page">
+<h1>Transport</h1><div class="muted">Delivery / vehicle expense register</div>
+<div class="panel">
+<label>Date</label><input id="transDate" type="date">
+<label>Vehicle / Driver</label><input id="transVehicle" placeholder="Vehicle number / driver">
+<label>Customer / Site</label><input id="transCustomer" placeholder="Delivery location">
+<label>Distance (km)</label><input id="transKm" type="number" min="0" step="0.1">
+<label>Transport charge collected</label><input id="transCharge" type="number" min="0" step="0.01" placeholder="₹">
+<label>Transport expense</label><input id="transExpense" type="number" min="0" step="0.01" placeholder="₹">
+<label>Notes</label><input id="transNotes" placeholder="Diesel / hire / delivery remarks">
+<button class="blue" style="width:100%;margin-top:12px" onclick="saveTransport()">SAVE TRANSPORT</button>
+</div>
+<div class="panel"><b>Recent Transport</b><div id="transportList"></div></div>
+</section>
+
+
+<section id="reports" class="page">
+<h1>Business Reports</h1>
+<div class="muted">Management dashboard and Profit & Loss</div>
+<div class="panel">
+<label>Report period</label>
+<div style="display:flex;gap:8px">
+<input id="reportFrom" type="date"><input id="reportTo" type="date">
+</div>
+<button class="blue" style="width:100%;margin-top:10px" onclick="loadReports()">CALCULATE REPORT</button>
+</div>
+<div id="reportCards" class="cards"></div>
+<div class="panel">
+<h3>Profit & Loss</h3>
+<div id="pnlReport"></div>
+</div>
+<div class="panel">
+<h3>Outstanding Customers</h3>
+<div id="outstandingReport"></div>
+</div>
+<div class="panel">
+<button class="blue" style="width:100%" onclick="printReport()">PRINT / SAVE PDF</button>
+</div>
+</section>
+
+
+<section id="purchases" class="page">
+<h1>Purchases</h1><div class="muted">Raw material purchase register</div>
+<div class="panel">
+<label>Date</label><input id="purchaseDate" type="date">
+<label>Supplier</label><select id="purchaseSupplier"></select>
+<label>Material</label><select id="purchaseMaterial">
+<option>Cement</option><option>M-Sand</option><option>Chips</option><option>Flyash</option><option>Colour / Oxide</option><option>Other Raw Material</option>
+</select>
+<label>Quantity</label><input id="purchaseQty" type="number" min="0" step="0.01">
+<label>Unit</label><input id="purchaseUnit" placeholder="Bags / Ton / Load / Kg">
+<label>Rate</label><input id="purchaseRate" type="number" min="0" step="0.01">
+<label>Total</label><input id="purchaseTotal" type="number" min="0" step="0.01">
+<label>Paid</label><input id="purchasePaid" type="number" min="0" step="0.01">
+<label>Notes</label><input id="purchaseNotes" placeholder="Invoice / lorry / remarks">
+<button class="blue" style="width:100%;margin-top:12px" onclick="savePurchase()">SAVE PURCHASE</button>
+</div>
+<div class="panel"><b>Recent Purchases</b><div id="purchaseList"></div></div>
+</section>
+
+<section id="suppliers" class="page">
+<h1>Suppliers</h1><div class="muted">Supplier master and purchase balances</div>
+<div class="panel">
+<label>Supplier name</label><input id="supplierName" placeholder="Supplier / company">
+<label>Phone</label><input id="supplierPhone" placeholder="Phone">
+<label>Address</label><input id="supplierAddress" placeholder="Address">
+<button class="blue" style="width:100%;margin-top:12px" onclick="saveSupplier()">ADD SUPPLIER</button>
+</div>
+<div class="panel"><b>Suppliers</b><div id="supplierList"></div></div>
+<div class="panel"><b>Supplier Outstanding</b><div id="supplierOutstanding"></div></div>
+</section>
+
+<section id="settings" class="page">
+<h1>Business Settings</h1><div class="muted">Invoice and tax settings</div>
+<div class="panel">
+<label>Invoice prefix</label><input id="invoicePrefix" value="MB">
+<label>Next invoice number</label><input id="nextInvoiceNo" type="number" value="1001">
+<label>Tax mode</label><select id="taxMode"><option value="NON_GST">Non-GST</option><option value="GST">GST</option></select>
+<label>GSTIN (optional)</label><input id="gstin" placeholder="GSTIN">
+<button class="blue" style="width:100%;margin-top:12px" onclick="saveSettingsV6()">SAVE SETTINGS</button>
+</div>
+<div class="panel">
+<b>Backup & Export</b>
+<p class="muted">Download your current cloud data as JSON for safekeeping.</p>
+<button class="blue" style="width:100%" onclick="backupData()">DOWNLOAD BACKUP</button>
+</div>
+</section>
+
+
+<section id="rawstock" class="page">
+<h1>Raw Material Stock</h1>
+<div class="muted">Purchase receipts and production consumption</div>
+<div id="rawStockCards" class="cards"></div>
+<div class="panel"><b>Material Movement</b><div id="rawStockMovement"></div></div>
+</section>
+
+
+<section id="users" class="page">
+<h1>Users & Security</h1>
+<div class="muted">Owner and staff access control</div>
+<div id="currentRole" class="status"></div>
+<div class="panel">
+<label>User email</label><input id="userEmail" type="email" placeholder="staff@example.com">
+<label>Role</label>
+<select id="userRole"><option value="STAFF">Staff</option><option value="OWNER">Owner</option></select>
+<label>Permissions</label>
+<div style="display:grid;gap:6px;margin-top:6px">
+<label><input type="checkbox" id="permSales" checked> Sales & invoices</label>
+<label><input type="checkbox" id="permPayments" checked> Payments</label>
+<label><input type="checkbox" id="permProduction" checked> Production</label>
+<label><input type="checkbox" id="permStock" checked> Stock</label>
+<label><input type="checkbox" id="permPurchases"> Purchases</label>
+<label><input type="checkbox" id="permExpenses"> Expenses</label>
+<label><input type="checkbox" id="permWorkers"> Worker payments</label>
+<label><input type="checkbox" id="permTransport"> Transport</label>
+<label><input type="checkbox" id="permReports"> Reports</label>
+<label><input type="checkbox" id="permSettings"> Business settings</label>
+</div>
+<button class="blue" style="width:100%;margin-top:12px" onclick="saveUserRole()">SAVE USER ACCESS</button>
+</div>
+<div class="panel"><b>Access list</b><div id="userList"></div></div>
+<div class="panel"><b>Activity History</b><div id="activityList"></div></div>
+</section>
+
+<section id="more" class="page"><h1>More</h1><div class="panel"><b>Price List</b><div id="priceList"></div></div>
+<div class="panel"><b>Coming next</b><div class="muted">Production • Stock • Expenses • Workers • Transport • PDF invoices • Reports • Backup</div></div>
+<button class="danger" onclick="logout()" style="margin-top:10px">Sign out</button></section>
+</main>
+<nav class="nav"><button onclick="show('dashboard')" id="n-dashboard">🏠<br>Home</button><button onclick="show('sale')" id="n-sale">🧾<br>Sales</button><button onclick="show('customer')" id="n-customer">👤<br>Customers</button><button onclick="show('payment')" id="n-payment">💰<br>Payments</button><button onclick="show('ledger')" id="n-ledger">📒<br>Ledger</button><button onclick="show('invoice')" id="n-invoice">🧾<br>Invoice</button><button onclick="show('production')" id="n-production">🏭<br>Production</button><button onclick="show('stock')" id="n-stock">📦<br>Stock</button><button onclick="show('reports')" id="n-reports">📊<br>Reports</button><button onclick="show('purchases')" id="n-purchases">🛒<br>Purchases</button><button onclick="show('rawstock')" id="n-rawstock">🧱<br>Raw Stock</button><button onclick="show('suppliers')" id="n-suppliers">🏢<br>Suppliers</button><button onclick="show('expenses')" id="n-expenses">💸<br>Expenses</button><button onclick="show('workers')" id="n-workers">👷<br>Workers</button><button onclick="show('transport')" id="n-transport">🚚<br>Transport</button><button onclick="show('users')" id="n-users">👥<br>Users</button><button onclick="show('settings')" id="n-settings">⚙️<br>Settings</button><button onclick="show('more')" id="n-more">☰<br>More</button></nav>
+</div>
+<script>
+const CONFIG={supabaseUrl:"https://fltwygoyctrutpdjrs.supabase.co",supabaseAnonKey:"sb_publishable_7OoJ1fpp-cyheygHyF9jww_6KpbprUK"};
+const PRODUCTS={"4 Inch Solid Block":["Piece",27],"6 Inch Solid Block":["Piece",34],"4x16 Inch Solid Block":["Piece",30],"6 Inch Interlock Brick":["Sqft",44],"8 Inch Interlock Brick":["Sqft",55],"60MM Paver Block":["Sqft",54],"80MM Paver Block":["Sqft",59]};
+let token=null,user=null,cart=[];
+const money=n=>"₹"+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+function show(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));let n=document.getElementById("n-"+id);if(n)n.classList.add("active");render()}
+function api(path,opts={}){opts.headers=Object.assign({"Content-Type":"application/json"},opts.headers||{},token?{"Authorization":"Bearer "+token,"apikey":CONFIG.supabaseAnonKey}:{});return fetch(CONFIG.supabaseUrl+"/rest/v1/"+path,opts)}
+async function signIn(){const emailEl=document.getElementById("email");const passwordEl=document.getElementById("password");const loginMsgEl=document.getElementById("loginMsg");const loginPanelEl=document.getElementById("loginPanel");const appEl=document.getElementById("app");if(CONFIG.supabaseUrl.includes("PASTE_")){loginMsgEl.textContent="Cloud credentials are not configured yet. This is the cloud-ready build.";loginMsgEl.className="status warn";return}try{let r=await fetch(CONFIG.supabaseUrl+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"Content-Type":"application/json","apikey":CONFIG.supabaseAnonKey},body:JSON.stringify({email:emailEl.value.trim(),password:passwordEl.value})});let d=await r.json();if(!r.ok)throw Error(d.msg||d.error_description||d.error||"Login failed");token=d.access_token;user=d.user;sessionStorage.setItem("mb_token",token);loginPanelEl.style.display="none";appEl.style.display="block";await render()}catch(e){loginMsgEl.textContent=e.message;loginMsgEl.className="status warn"}}
+function logout(){sessionStorage.removeItem("mb_token");location.reload()}
+async function addCustomer(){let name=cName.value.trim();if(!name)return alert("Enter customer name");if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Cloud database is not configured yet.");let r=await api("customers",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({name,phone:cPhone.value.trim(),address:cAddress.value.trim()})});if(!r.ok)return alert(await r.text());cName.value=cPhone.value=cAddress.value="";await render();alert("Customer saved")}
+product.onchange=()=>rate.value=PRODUCTS[product.value][1];
+function addItem(){let q=Number(qty.value),r=Number(rate.value);if(!q||q<0||r<0)return alert("Enter valid quantity/rate");cart.push({product:product.value,unit:PRODUCTS[product.value][0],qty:q,rate:r,amount:q*r});updateCart()}
+function updateCart(){saleItems.innerHTML=cart.map((x,i)=>`<div class="item"><span>${x.product}<br><span class="small">${x.qty} ${x.unit} × ${money(x.rate)}</span></span><b>${money(x.amount)} <button class="danger" onclick="cart.splice(${i},1);updateCart()">×</button></b></div>`).join("");let sub=cart.reduce((a,x)=>a+x.amount,0),total=Math.max(0,sub+Number(transport.value||0)-Number(discount.value||0));saleTotal.textContent=money(total)}
+["transport","discount"].forEach(id=>document.getElementById(id).addEventListener("input",updateCart));
+async function saveSale(){if(!cart.length)return alert("Add an item");if(!saleCustomer.value)return alert("Select a customer");if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Cloud database is not configured yet.");let sub=cart.reduce((a,x)=>a+x.amount,0),total=Math.max(0,sub+Number(transport.value||0)-Number(discount.value||0)),p=Number(paid.value||0);if(p<0||p>total)return alert("Invalid payment");let r=await api("sales",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({customer_id:Number(saleCustomer.value),subtotal:sub,transport:Number(transport.value||0),discount:Number(discount.value||0),total,paid:p,items:cart})});if(!r.ok)return alert(await r.text());cart=[];paid.value=transport.value=discount.value=0;await render();alert("Sale saved")}
+async function addPayment(){if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Cloud database is not configured yet.");let amount=Number(payAmount.value);if(!payCustomer.value||amount<=0)return alert("Select customer and amount");let r=await api("payments",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({customer_id:Number(payCustomer.value),amount,method:payMethod.value,note:payNote.value})});if(!r.ok)return alert(await r.text());payAmount.value=payNote.value="";await render();alert("Payment saved")}
+
+async function loadLedger(){
+  if(CONFIG.supabaseUrl.includes("PASTE_")) return;
+  const cid=ledgerCustomer.value;
+  if(!cid){ledgerList.innerHTML="";return}
+  try{
+    const [sr,pr,cr]=await Promise.all([
+      api("sales?select=*&customer_id=eq."+cid+"&order=sale_date.desc"),
+      api("payments?select=*&customer_id=eq."+cid+"&order=payment_date.desc"),
+      api("customers?id=eq."+cid)
+    ]);
+    const sales=await sr.json(), payments=await pr.json(), cust=(await cr.json())[0];
+    const st=sales.reduce((a,x)=>a+Number(x.total),0), pt=payments.reduce((a,x)=>a+Number(x.amount),0);
+    ledgerSales.textContent=money(st); ledgerPaid.textContent=money(pt); ledgerBalance.textContent=money(st-pt);
+    let rows=[];
+    sales.forEach(s=>rows.push({date:s.sale_date,type:"Sale",ref:s.invoice_no||("Sale #"+s.id),amount:Number(s.total),sign:""}));
+    payments.forEach(p=>rows.push({date:p.payment_date,type:"Payment",ref:p.method||"Payment",amount:Number(p.amount),sign:"-"}));
+    rows.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    ledgerList.innerHTML=rows.map(x=>`<div class="item"><span><b>${x.type}</b><br><span class="small">${new Date(x.date).toLocaleDateString("en-IN")} • ${x.ref}</span></span><b class="${x.type==="Payment"?"success":""}">${x.sign}${money(x.amount)}</b></div>`).join("")||'<div class="muted" style="padding:12px 0">No transactions.</div>';
+  }catch(e){ledgerList.innerHTML='<div class="status warn">Could not load ledger.</div>'}
+}
+function printLedger(){
+  const cid=ledgerCustomer.value;
+  if(!cid)return alert("Select a customer");
+  const title=ledgerCustomer.options[ledgerCustomer.selectedIndex].text;
+  const body=`<html><head><title>Muthu Bricks Ledger</title><style>body{font-family:Arial;padding:30px}h1{color:#17324d}table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left}.right{text-align:right}</style></head><body><h1>MUTHU BRICKS</h1><p>Customer Ledger</p><h2>${title}</h2>${ledgerList.innerHTML}<hr><b>Sales: ${ledgerSales.textContent} &nbsp; Payments: ${ledgerPaid.textContent} &nbsp; Balance: ${ledgerBalance.textContent}</b><script>window.print()<\/script></body></html>`;
+  const w=window.open("","_blank");w.document.write(body);w.document.close();
+}
+function renderInvoice(){
+  if(!invoiceSelect.value){invoicePreview.innerHTML="";return}
+  let s=window._invoiceSales.find(x=>String(x.id)===String(invoiceSelect.value));
+  if(!s){invoicePreview.innerHTML="";return}
+  let items=Array.isArray(s.items)?s.items:[];
+  invoicePreview.innerHTML=`<div id="printInvoice" style="font-family:Arial;background:white;padding:18px;color:#17324d">
+  <h2 style="margin:0">MUTHU BRICKS</h2><div class="small">Solid Blocks • Interlock Bricks • Paver Blocks<br>Senthamangalam, Namakkal, Tamil Nadu<br>Contact: 7200116708</div>
+  <hr><div class="item"><span><b>Invoice:</b> ${s.invoice_no||((V6_SETTINGS.invoice_prefix||"MB")+"-"+s.id)}<br><b>Date:</b> ${new Date(s.sale_date).toLocaleString("en-IN")}</span><b>${s.customer_name||"Customer"}</b></div>
+  <table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th style="text-align:left;padding:7px;border-bottom:1px solid #ddd">Item</th><th style="text-align:right;padding:7px;border-bottom:1px solid #ddd">Qty</th><th style="text-align:right;padding:7px;border-bottom:1px solid #ddd">Rate</th><th style="text-align:right;padding:7px;border-bottom:1px solid #ddd">Amount</th></tr>
+  ${items.map(i=>`<tr><td style="padding:7px;border-bottom:1px solid #eee">${i.product}</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">${i.qty} ${i.unit}</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">${money(i.rate)}</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">${money(i.amount)}</td></tr>`).join("")}</table>
+  <div style="text-align:right;margin-top:14px">Subtotal: ${money(s.subtotal)}<br>Transport: ${money(s.transport)}<br>Discount: ${money(s.discount)}<br><b style="font-size:18px">TOTAL: ${money(s.total)}</b><br>Paid: ${money(s.paid)}<br><b>Balance: ${money(Number(s.total)-Number(s.paid))}</b></div>
+  <p style="margin-top:25px;text-align:center">Thank you for doing business with Muthu Bricks!</p></div>`;
+}
+function printInvoice(){
+  if(!invoiceSelect.value)return alert("Select an invoice");
+  const content=document.getElementById("printInvoice").outerHTML;
+  const w=window.open("","_blank");w.document.write(`<html><head><title>Muthu Bricks Invoice</title></head><body>${content}<script>window.print()<\/script></body></html>`);w.document.close();
+}
+
+
+const STOCK_PRODUCTS=[
+ {name:"4 Inch Solid Block",unit:"pieces"},
+ {name:"6 Inch Solid Block",unit:"pieces"},
+ {name:"4x16 Inch Solid Block",unit:"pieces"},
+ {name:"6 Inch Interlock Brick",unit:"sqft"},
+ {name:"8 Inch Interlock Brick",unit:"sqft"},
+ {name:"60MM Paver Block",unit:"sqft"},
+ {name:"80MM Paver Block",unit:"sqft"},
+ {name:"Flyash Brick",unit:"pieces"},
+ {name:"Readymade Compound Wall",unit:"pieces"}
+];
+function fillProductionProducts(){
+  prodProduct.innerHTML=STOCK_PRODUCTS.map(p=>`<option value="${p.name}" data-unit="${p.unit}">${p.name}</option>`).join("");
+  prodDate.value=new Date().toISOString().slice(0,10);
+  prodUnit.value=STOCK_PRODUCTS[0].unit;
+  prodProduct.onchange=()=>prodUnit.value=STOCK_PRODUCTS.find(p=>p.name===prodProduct.value)?.unit||"pieces";
+}
+async function saveProduction(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ const qty=Number(prodQty.value); if(!qty||qty<0)return alert("Enter production quantity.");
+ try{
+  const consumption=getConsumption();
+  const body={production_date:prodDate.value,product:prodProduct.value,qty,unit:prodUnit.value,notes:prodNotes.value||null,material_consumption:consumption};
+  const r=await api("production",{method:"POST",body});
+  if(!r.ok) throw new Error(await r.text());
+  const sr=await api("stock_movements",{method:"POST",body:{movement_date:prodDate.value,product:prodProduct.value,qty,unit:prodUnit.value,movement_type:"PRODUCTION",notes:prodNotes.value||null}});
+  if(!sr.ok) throw new Error(await sr.text());
+  prodQty.value="";prodNotes.value="";buildConsumptionInputs();
+  await loadProduction();await loadStock();await loadRawStock();await logActivity("PRODUCTION_SAVED","Production",{product:prodProduct.value,qty});
+  alert("Production and material consumption saved.");
+ }catch(e){alert("Could not save production: "+e.message)}
+}
+async function loadProduction(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{
+  const r=await api("production?select=*&order=production_date.desc,created_at.desc");
+  const a=await r.json();
+  productionList.innerHTML=a.slice(0,20).map(x=>`<div class="item"><span><b>${x.product}</b><br><span class="small">${new Date(x.production_date).toLocaleDateString("en-IN")} • ${x.notes||"Production"}</span></span><b>${Number(x.qty).toLocaleString("en-IN")} ${x.unit}</b></div>`).join("")||'<div class="muted">No production recorded.</div>';
+ }catch(e){productionList.innerHTML='<div class="status warn">Could not load production.</div>'}
+}
+async function loadStock(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{
+  const r=await api("stock_movements?select=*&order=movement_date.desc,created_at.desc");
+  const rows=await r.json(), totals={};
+  STOCK_PRODUCTS.forEach(p=>totals[p.name]=0);
+  rows.forEach(x=>{if(totals[x.product]===undefined)totals[x.product]=0;totals[x.product]+=Number(x.qty)*(x.movement_type==="SALE"?-1:1)});
+  stockCards.innerHTML=STOCK_PRODUCTS.map(p=>`<div class="card"><div class="label">${p.name}</div><div class="value">${(totals[p.name]||0).toLocaleString("en-IN")} <span style="font-size:12px">${p.unit}</span></div></div>`).join("");
+  stockMovement.innerHTML=rows.slice(0,30).map(x=>`<div class="item"><span><b>${x.product}</b><br><span class="small">${new Date(x.movement_date).toLocaleDateString("en-IN")} • ${x.movement_type}</span></span><b>${x.movement_type==="SALE"?"-":"+"}${Number(x.qty).toLocaleString("en-IN")} ${x.unit}</b></div>`).join("")||'<div class="muted">No stock movements.</div>';
+ }catch(e){stockMovement.innerHTML='<div class="status warn">Run the V3 schema.sql in Supabase first.</div>'}
+}
+
+
+
+function buildConsumptionInputs(){
+ consumptionInputs.innerHTML=RAW_MATERIALS.map(m=>`<div style="display:flex;gap:6px;align-items:center;margin:5px 0"><span style="flex:1">${m}</span><input id="cons_${m.replace(/[^a-zA-Z0-9]/g,"_")}" type="number" min="0" step="0.01" placeholder="Qty" style="width:110px"></div>`).join("");
+}
+function getConsumption(){
+ const o={};RAW_MATERIALS.forEach(m=>{const el=document.getElementById("cons_"+m.replace(/[^a-zA-Z0-9]/g,"_"));const q=Number(el?.value||0);if(q>0)o[m]=q});return o;
+}
+
+function setDatesV4(){
+ const d=new Date().toISOString().slice(0,10);
+ expDate.value=d;workerDate.value=d;transDate.value=d;
+}
+async function saveExpense(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ const amount=Number(expAmount.value);if(!amount||amount<0)return alert("Enter expense amount.");
+ try{const r=await api("expenses",{method:"POST",body:{expense_date:expDate.value,category:expCategory.value,amount,notes:expNotes.value||null}});
+ if(!r.ok)throw Error(await r.text());expAmount.value="";expNotes.value="";await loadExpenses();await logActivity("EXPENSE_SAVED","Expenses",{amount,category:expCategory.value});alert("Expense saved.");}catch(e){alert("Could not save expense: "+e.message)}
+}
+async function loadExpenses(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{const r=await api("expenses?select=*&order=expense_date.desc,created_at.desc");const a=await r.json();
+ expenseList.innerHTML=a.slice(0,30).map(x=>`<div class="item"><span><b>${x.category}</b><br><span class="small">${new Date(x.expense_date).toLocaleDateString("en-IN")} • ${x.notes||""}</span></span><b>${money(x.amount)}</b></div>`).join("")||'<div class="muted">No expenses.</div>';
+ }catch(e){expenseList.innerHTML='<div class="status warn">Run the V4 schema.sql in Supabase first.</div>'}
+}
+async function saveWorker(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ const amount=Number(workerAmount.value);if(!workerName.value.trim()||!amount)return alert("Enter worker name and amount.");
+ try{const r=await api("worker_payments",{method:"POST",body:{payment_date:workerDate.value,worker_name:workerName.value.trim(),role:workerRole.value||null,amount,method:workerMethod.value,notes:workerNotes.value||null}});
+ if(!r.ok)throw Error(await r.text());workerAmount.value="";workerNotes.value="";await loadWorkers();await logActivity("WORKER_PAYMENT_SAVED","Workers",{amount,worker:workerName.value});alert("Worker payment saved.");}catch(e){alert("Could not save worker payment: "+e.message)}
+}
+async function loadWorkers(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{const r=await api("worker_payments?select=*&order=payment_date.desc,created_at.desc");const a=await r.json();
+ workerList.innerHTML=a.slice(0,30).map(x=>`<div class="item"><span><b>${x.worker_name}</b><br><span class="small">${new Date(x.payment_date).toLocaleDateString("en-IN")} • ${x.role||""} • ${x.method||""}</span></span><b>${money(x.amount)}</b></div>`).join("")||'<div class="muted">No worker payments.</div>';
+ }catch(e){workerList.innerHTML='<div class="status warn">Run the V4 schema.sql in Supabase first.</div>'}
+}
+async function saveTransport(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ try{const r=await api("transport",{method:"POST",body:{transport_date:transDate.value,vehicle_driver:transVehicle.value||null,customer_site:transCustomer.value||null,distance_km:Number(transKm.value)||0,charge_collected:Number(transCharge.value)||0,expense:Number(transExpense.value)||0,notes:transNotes.value||null}});
+ if(!r.ok)throw Error(await r.text());transCharge.value="";transExpense.value="";transNotes.value="";await loadTransport();await logActivity("TRANSPORT_SAVED","Transport",{charge:Number(transCharge.value)||0,expense:Number(transExpense.value)||0});alert("Transport saved.");}catch(e){alert("Could not save transport: "+e.message)}
+}
+async function loadTransport(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{const r=await api("transport?select=*&order=transport_date.desc,created_at.desc");const a=await r.json();
+ transportList.innerHTML=a.slice(0,30).map(x=>`<div class="item"><span><b>${x.vehicle_driver||"Delivery"}</b><br><span class="small">${new Date(x.transport_date).toLocaleDateString("en-IN")} • ${x.customer_site||""} • ${Number(x.distance_km||0)} km</span></span><b>+${money(x.charge_collected)} / -${money(x.expense)}</b></div>`).join("")||'<div class="muted">No transport records.</div>';
+ }catch(e){transportList.innerHTML='<div class="status warn">Run the V4 schema.sql in Supabase first.</div>'}
+}
+
+
+function setReportDates(){
+ const d=new Date(), to=d.toISOString().slice(0,10);
+ const f=new Date(d); f.setDate(1);
+ reportFrom.value=f.toISOString().slice(0,10); reportTo.value=to;
+}
+function numsum(a,key){return a.reduce((s,x)=>s+Number(x[key]||0),0)}
+async function loadReports(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{
+  const from=reportFrom.value,to=reportTo.value;
+  const q=x=>`?select=*&${x>=0?"":""}`;
+  const urls=[
+   `sales?select=*&sale_date=gte.${from}&sale_date=lte.${to}`,
+   `payments?select=*&payment_date=gte.${from}&payment_date=lte.${to}`,
+   `expenses?select=*&expense_date=gte.${from}&expense_date=lte.${to}`,
+   `worker_payments?select=*&payment_date=gte.${from}&payment_date=lte.${to}`,
+   `transport?select=*&transport_date=gte.${from}&transport_date=lte.${to}`,
+   `customers?select=*`
+  ];
+  const rs=await Promise.all(urls.map(u=>api(u)));
+  const [sales,payments,expenses,workers,transport,customers]=await Promise.all(rs.map(r=>r.json()));
+  const revenue=numsum(sales,"total");
+  const collections=numsum(payments,"amount");
+  const expenseTotal=numsum(expenses,"amount");
+  const workerTotal=numsum(workers,"amount");
+  const transportCost=numsum(transport,"expense");
+  const transportIncome=numsum(transport,"charge_collected");
+  const totalCosts=expenseTotal+workerTotal+transportCost;
+  const operatingResult=revenue+transportIncome-totalCosts;
+  const cards=[
+   ["Sales",money(revenue)],["Collections",money(collections)],["Expenses",money(expenseTotal)],
+   ["Workers",money(workerTotal)],["Transport Cost",money(transportCost)],["Net Result",money(operatingResult)]
+  ];
+  reportCards.innerHTML=cards.map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></div>`).join("");
+  pnlReport.innerHTML=`
+   <div class="item"><span>Sales</span><b>${money(revenue)}</b></div>
+   <div class="item"><span>Transport income</span><b>${money(transportIncome)}</b></div>
+   <div class="item"><span>Less: Expenses</span><b>- ${money(expenseTotal)}</b></div>
+   <div class="item"><span>Less: Worker payments</span><b>- ${money(workerTotal)}</b></div>
+   <div class="item"><span>Less: Transport cost</span><b>- ${money(transportCost)}</b></div>
+   <div class="item"><span><b>Net result</b></span><b>${money(operatingResult)}</b></div>
+   <div class="item"><span>Collections received</span><b>${money(collections)}</b></div>`;
+  // Customer outstanding based on all sales/payments, not just period.
+  const [allSalesR,allPaymentsR]=await Promise.all([
+   api("sales?select=*"),
+   api("payments?select=*")
+  ]);
+  const allSales=await allSalesR.json(),allPayments=await allPaymentsR.json();
+  const by={};
+  customers.forEach(c=>by[c.id]={name:c.name,sales:0,paid:0});
+  allSales.forEach(s=>{if(by[s.customer_id])by[s.customer_id].sales+=Number(s.total||0)});
+  allPayments.forEach(p=>{if(by[p.customer_id])by[p.customer_id].paid+=Number(p.amount||0)});
+  const open=Object.values(by).filter(x=>x.sales-x.paid>0.009).sort((a,b)=>(b.sales-b.paid)-(a.sales-a.paid));
+  outstandingReport.innerHTML=open.map(x=>`<div class="item"><span><b>${x.name}</b><br><span class="small">Sales ${money(x.sales)} • Paid ${money(x.paid)}</span></span><b>${money(x.sales-x.paid)}</b></div>`).join("")||'<div class="muted">No outstanding balance.</div>';
+ }catch(e){
+  reportCards.innerHTML='<div class="status warn">Could not load report. Make sure V4 schema is installed.</div>';
+ }
+}
+function printReport(){
+ const content=`<html><head><title>Muthu Bricks Business Report</title><style>body{font-family:Arial;padding:30px;color:#17324d}.row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #ddd}.box{border:1px solid #ddd;padding:15px;margin:10px 0}</style></head><body><h1>MUTHU BRICKS</h1><p>Business Report: ${reportFrom.value} to ${reportTo.value}</p><div class="box">${pnlReport.innerHTML}</div><h3>Outstanding Customers</h3><div class="box">${outstandingReport.innerHTML}</div><script>window.print()<\/script></body></html>`;
+ const w=window.open("","_blank");w.document.write(content);w.document.close();
+}
+
+
+
+async function getNextInvoiceNumber(){
+ try{
+  const r=await api("business_settings?select=*&limit=1");
+  const a=await r.json();
+  let s=a[0]||{invoice_prefix:"MB",next_invoice_no:1001};
+  const no=Number(s.next_invoice_no||1001);
+  const invoice=(s.invoice_prefix||"MB")+"-"+String(no).padStart(4,"0");
+  if(a[0]){
+    await api("business_settings?id=eq."+encodeURIComponent(s.user_id),{
+      method:"PATCH",
+      body:{next_invoice_no:no+1,updated_at:new Date().toISOString()}
+    });
+  }else{
+    await api("business_settings",{method:"POST",body:{invoice_prefix:s.invoice_prefix||"MB",next_invoice_no:no+1,tax_mode:s.tax_mode||"NON_GST",gstin:s.gstin||null}});
+  }
+  return invoice;
+ }catch(e){return "MB-"+Date.now()}
+}
+async function ensureInvoiceNumbers(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{
+  const r=await api("sales?select=id,invoice_no&order=id.asc");
+  const sales=await r.json();
+  const missing=sales.filter(s=>!s.invoice_no);
+  for(const s of missing){
+    const inv=await getNextInvoiceNumber();
+    await api("sales?id=eq."+s.id,{method:"PATCH",body:{invoice_no:inv}});
+  }
+ }catch(e){}
+}
+
+let V6_SETTINGS={invoice_prefix:"MB",next_invoice_no:1001,tax_mode:"NON_GST",gstin:""};
+function todayV6(){return new Date().toISOString().slice(0,10)}
+async function loadSuppliers(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{const r=await api("suppliers?select=*&order=name");const a=await r.json();
+ purchaseSupplier.innerHTML='<option value="">-- Select supplier --</option>'+a.map(x=>`<option value="${x.id}">${x.name}</option>`).join("");
+ supplierList.innerHTML=a.map(x=>`<div class="item"><span><b>${x.name}</b><br><span class="small">${x.phone||""}${x.address?" • "+x.address:""}</span></span></div>`).join("")||'<div class="muted">No suppliers.</div>';
+ }catch(e){supplierList.innerHTML='<div class="status warn">Run V6 schema.sql first.</div>'}
+}
+
+async function loadSupplierOutstanding(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{
+  const [sr,pr]=await Promise.all([api("suppliers?select=*"),api("purchases?select=*")]);
+  const suppliers=await sr.json(), purchases=await pr.json();
+  supplierOutstanding.innerHTML=suppliers.map(s=>{
+   const rows=purchases.filter(p=>String(p.supplier_id)===String(s.id));
+   const total=rows.reduce((a,x)=>a+Number(x.total||0),0), paid=rows.reduce((a,x)=>a+Number(x.paid||0),0);
+   return total-paid>0.009?`<div class="item"><span><b>${s.name}</b><br><span class="small">Purchased ${money(total)} • Paid ${money(paid)}</span></span><b>${money(total-paid)}</b></div>`:"";
+  }).join("")||'<div class="muted">No supplier outstanding balance.</div>';
+ }catch(e){supplierOutstanding.innerHTML='<div class="status warn">Could not load supplier balances.</div>'}
+}
+
+async function saveSupplier(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ if(!supplierName.value.trim())return alert("Enter supplier name.");
+ try{const r=await api("suppliers",{method:"POST",body:{name:supplierName.value.trim(),phone:supplierPhone.value||null,address:supplierAddress.value||null}});
+ if(!r.ok)throw Error(await r.text());supplierName.value="";supplierPhone.value="";supplierAddress.value="";await loadSuppliers();await loadSupplierOutstanding();alert("Supplier added.");}catch(e){alert("Could not save supplier: "+e.message)}
+}
+async function savePurchase(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ const total=Number(purchaseTotal.value)||(Number(purchaseQty.value)*Number(purchaseRate.value));
+ if(!total)return alert("Enter purchase total.");
+ try{const r=await api("purchases",{method:"POST",body:{purchase_date:purchaseDate.value,supplier_id:purchaseSupplier.value?Number(purchaseSupplier.value):null,material:purchaseMaterial.value,qty:Number(purchaseQty.value)||0,unit:purchaseUnit.value||null,rate:Number(purchaseRate.value)||0,total,paid:Number(purchasePaid.value)||0,notes:purchaseNotes.value||null}});
+ if(!r.ok)throw Error(await r.text());purchaseQty.value="";purchaseRate.value="";purchaseTotal.value="";purchasePaid.value="";purchaseNotes.value="";await loadPurchases();await loadRawStock();await logActivity("PURCHASE_SAVED","Purchases",{material:purchaseMaterial.value,total});alert("Purchase saved.");}catch(e){alert("Could not save purchase: "+e.message)}
+}
+async function loadPurchases(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{const r=await api("purchases?select=*&order=purchase_date.desc,created_at.desc");const a=await r.json();
+ purchaseList.innerHTML=a.slice(0,30).map(x=>`<div class="item"><span><b>${x.material}</b><br><span class="small">${new Date(x.purchase_date).toLocaleDateString("en-IN")} • Qty ${x.qty||0} ${x.unit||""}</span></span><b>${money(x.total)}</b></div>`).join("")||'<div class="muted">No purchases.</div>';
+ }catch(e){purchaseList.innerHTML='<div class="status warn">Run V6 schema.sql first.</div>'}
+}
+async function loadSettingsV6(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{const r=await api("business_settings?select=*&limit=1");const a=await r.json();
+ if(a[0]){V6_SETTINGS=a[0];invoicePrefix.value=a[0].invoice_prefix;nextInvoiceNo.value=a[0].next_invoice_no;taxMode.value=a[0].tax_mode;gstin.value=a[0].gstin||""}
+ }catch(e){}
+}
+async function saveSettingsV6(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ const body={invoice_prefix:invoicePrefix.value||"MB",next_invoice_no:Number(nextInvoiceNo.value)||1001,tax_mode:taxMode.value,gstin:gstin.value||null,updated_at:new Date().toISOString()};
+ try{
+  const r=await api("business_settings",{method:"POST",body,headers:{"Prefer":"resolution=merge-duplicates"}});
+  if(!r.ok)throw Error(await r.text());V6_SETTINGS=body;alert("Settings saved.");
+ }catch(e){alert("Could not save settings: "+e.message)}
+}
+async function backupData(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ const tables=["customers","sales","payments","production","stock_movements","expenses","worker_payments","transport","suppliers","purchases","business_settings"];
+ try{
+  const data={backup_date:new Date().toISOString(),tables:{}};
+  for(const t of tables){const r=await api(t+"?select=*");data.tables[t]=await r.json()}
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="muthu-bricks-backup-"+todayV6()+".json";a.click();URL.revokeObjectURL(a.href);
+ }catch(e){alert("Backup failed: "+e.message)}
+}
+
+
+const RAW_MATERIALS=["Cement","M-Sand","Chips","Flyash","Colour / Oxide","Other Raw Material"];
+async function loadRawStock(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{
+  const [pr,cr]=await Promise.all([api("purchases?select=*"),api("production?select=*")]);
+  const purchases=await pr.json(), productions=await cr.json();
+  const totals={};RAW_MATERIALS.forEach(x=>totals[x]=0);
+  // Purchase quantities are positive. Production consumption is represented by
+  // an optional material_consumption JSON object on production records.
+  purchases.forEach(x=>{if(totals[x.material]!==undefined)totals[x.material]+=Number(x.qty||0)});
+  productions.forEach(x=>{
+    if(x.material_consumption){
+      Object.entries(x.material_consumption).forEach(([m,q])=>{totals[m]=(totals[m]||0)-Number(q||0)})
+    }
+  });
+  rawStockCards.innerHTML=RAW_MATERIALS.map(m=>`<div class="card"><div class="label">${m}</div><div class="value">${(totals[m]||0).toLocaleString("en-IN")}</div></div>`).join("");
+  const mov=[];
+  purchases.forEach(x=>mov.push({date:x.purchase_date,type:"PURCHASE",material:x.material,qty:Number(x.qty||0),unit:x.unit||""}));
+  productions.forEach(x=>{
+    if(x.material_consumption)Object.entries(x.material_consumption).forEach(([m,q])=>mov.push({date:x.production_date,type:"CONSUMPTION",material:m,qty:-Number(q||0),unit:""}))
+  });
+  mov.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  rawStockMovement.innerHTML=mov.slice(0,50).map(x=>`<div class="item"><span><b>${x.material}</b><br><span class="small">${new Date(x.date).toLocaleDateString("en-IN")} • ${x.type}</span></span><b>${x.qty>0?"+":""}${x.qty.toLocaleString("en-IN")} ${x.unit}</b></div>`).join("")||'<div class="muted">No raw material movements.</div>';
+ }catch(e){rawStockMovement.innerHTML='<div class="status warn">Run V7 schema.sql first.</div>'}
+}
+
+
+let V8_ROLE={role:"STAFF",permissions:{}};
+function defaultPerms(){
+ return {sales:true,payments:true,production:true,stock:true,purchases:false,expenses:false,workers:false,transport:false,reports:false,settings:false};
+}
+function applyRoleUI(){
+ const p=V8_ROLE.permissions||{};
+ const owner=V8_ROLE.role==="OWNER";
+ const map={sales:"n-invoice",payments:"n-payment",production:"n-production",stock:"n-stock",purchases:"n-purchases",expenses:"n-expenses",workers:"n-workers",transport:"n-transport",reports:"n-reports",settings:"n-settings"};
+ Object.entries(map).forEach(([k,id])=>{
+   const el=document.getElementById(id);
+   if(el) el.style.display=(owner||p[k])?"":"none";
+ });
+ const users=document.getElementById("n-users");
+ if(users) users.style.display=owner?"":"none";
+ currentRole.innerHTML=`Current access: <b>${owner?"OWNER":"STAFF"}</b>`;
+}
+async function loadRoleV8(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{
+   const r=await api("user_roles?select=*&limit=1");
+   const a=await r.json();
+   if(a[0]) V8_ROLE=a[0];
+   else {
+     V8_ROLE={role:"OWNER",permissions:defaultPerms()};
+     await api("user_roles",{method:"POST",body:{role:"OWNER",permissions:defaultPerms()}});
+   }
+   applyRoleUI();
+ }catch(e){
+   V8_ROLE={role:"OWNER",permissions:defaultPerms()};
+   applyRoleUI();
+ }
+}
+function selectedPerms(){
+ return {sales:permSales.checked,payments:permPayments.checked,production:permProduction.checked,stock:permStock.checked,purchases:permPurchases.checked,expenses:permExpenses.checked,workers:permWorkers.checked,transport:permTransport.checked,reports:permReports.checked,settings:permSettings.checked};
+}
+async function saveUserRole(){
+ // Supabase Auth does not allow creating another login securely from a browser with anon key.
+ // This screen therefore records access settings for the currently signed-in account.
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
+ const email=userEmail.value.trim();
+ if(!email)return alert("Enter the user's email.");
+ if(email!==currentUserEmail())return alert("For security, a staff account should be created/invited through Supabase Auth or an admin backend. This browser cannot create another user's password.");
+ try{
+  const body={role:userRole.value,permissions:selectedPerms(),updated_at:new Date().toISOString()};
+  const r=await api("user_roles?user_id=eq."+encodeURIComponent(await currentUserId()),{method:"PATCH",body});
+  if(!r.ok)throw Error(await r.text());
+  await logActivity("ACCESS_UPDATED","Security",{role:body.role,permissions:body.permissions});
+  await loadRoleV8();await loadActivityV8();alert("Access settings saved for this account.");
+ }catch(e){alert("Could not save access: "+e.message)}
+}
+function currentUserId(){
+ return Promise.resolve(window._supabaseUserId||"");
+}
+function currentUserEmail(){
+ return window._supabaseUserEmail||"";
+}
+async function logActivity(action,module,details={}){
+ try{await api("activity_log",{method:"POST",body:{action,module,details}})}catch(e){}
+}
+async function loadActivityV8(){
+ if(CONFIG.supabaseUrl.includes("PASTE_"))return;
+ try{
+  const r=await api("activity_log?select=*&order=created_at.desc&limit=50");
+  const a=await r.json();
+  activityList.innerHTML=a.map(x=>`<div class="item"><span><b>${x.action}</b><br><span class="small">${new Date(x.created_at).toLocaleString("en-IN")} • ${x.module||""}</span></span></div>`).join("")||'<div class="muted">No activity yet.</div>';
+ }catch(e){activityList.innerHTML='<div class="status warn">Could not load activity.</div>'}
+}
+
+
+async function initV8Identity(){
+ try{
+   const c=window.sb||window.supabaseClient||window.supabase;
+   if(c?.auth?.getUser){
+     const {data}=await c.auth.getUser();
+     if(data?.user){window._supabaseUserId=data.user.id;window._supabaseUserEmail=data.user.email||""}
+   }
+ }catch(e){}
+}
+
+
+let V9_LANG=localStorage.getItem("muthu_lang")||"en";
+function applyLanguage(){
+ document.querySelectorAll("[data-en]").forEach(el=>el.textContent=V9_LANG==="ta"?el.dataset.ta:el.dataset.en);
+ document.getElementById("langBtn").textContent=V9_LANG==="ta"?"English":"தமிழ்";
+ document.getElementById("homeTitle").textContent=V9_LANG==="ta"?"முத்து பிரிக்ஸ்":"Muthu Bricks";
+ document.getElementById("homeSubtitle").textContent=V9_LANG==="ta"?"வணிக டாஷ்போர்டு":"Business Dashboard";
+}
+function toggleLanguage(){V9_LANG=V9_LANG==="en"?"ta":"en";localStorage.setItem("muthu_lang",V9_LANG);applyLanguage()}
+async function loadHomeDashboard(){
+ if(CONFIG.supabaseUrl.includes("PASTE_")){applyLanguage();return}
+ try{
+  const today=new Date().toISOString().slice(0,10);
+  const [sr,pr,er,cr,customersR]=await Promise.all([
+   api("sales?select=*&sale_date=gte."+today+"&sale_date=lte."+today),
+   api("payments?select=*&payment_date=gte."+today+"&payment_date=lte."+today),
+   api("expenses?select=*&expense_date=gte."+today+"&expense_date=lte."+today),
+   api("customers?select=*"),
+   api("sales?select=*")
+  ]);
+  const sales=await sr.json(),payments=await pr.json(),expenses=await er.json(),customers=await cr.json(),allSales=await customersR.json();
+  const [allPayR]=await Promise.all([api("payments?select=*")]);const allPay=await allPayR.json();
+  const billed=allSales.reduce((a,x)=>a+Number(x.total||0),0),paid=allPay.reduce((a,x)=>a+Number(x.amount||0),0);
+  homeSales.textContent=money(sales.reduce((a,x)=>a+Number(x.total||0),0));
+  homeCollection.textContent=money(payments.reduce((a,x)=>a+Number(x.amount||0),0));
+  homeExpenses.textContent=money(expenses.reduce((a,x)=>a+Number(x.amount||0),0));
+  homeOutstanding.textContent=money(billed-paid);
+  homeTodayList.innerHTML=[
+    ...sales.map(x=>`<div class="item"><span>🧾 ${x.invoice_no||"Sale"}</span><b>${money(x.total)}</b></div>`),
+    ...payments.map(x=>`<div class="item"><span>💰 Payment</span><b>${money(x.amount)}</b></div>`),
+    ...expenses.map(x=>`<div class="item"><span>💸 ${x.category}</span><b>${money(x.amount)}</b></div>`)
+  ].join("")||'<div class="muted">No entries today.</div>';
+  applyLanguage();
+ }catch(e){applyLanguage()}
+}
+
+async function render(){
+priceList.innerHTML=Object.entries(PRODUCTS).map(([p,v])=>`<div class="item"><span>${p}<br><span class="small">${v[0]}</span></span><b>${money(v[1])}</b></div>`).join("");
+product.innerHTML=Object.keys(PRODUCTS).map(p=>`<option>${p}</option>`).join("");rate.value=PRODUCTS[product.value][1];
+if(CONFIG.supabaseUrl.includes("PASTE_")){connection.textContent="Cloud setup pending";connection.className="status warn";return}
+try{
+let [cr,sr,pr]=await Promise.all([api("customers?select=*"),api("sales?select=*"),api("payments?select=*")]);
+if(!cr.ok||!sr.ok||!pr.ok)throw Error("Database request failed");
+let customers=await cr.json(),sales=await sr.json(),payments=await pr.json(); window._invoiceSales=sales; invoiceSelect.innerHTML=sales.map(s=>`<option value="${s.id}">${s.invoice_no||("Sale #"+s.id)}</option>`).join(""); ledgerCustomer.innerHTML=customers.map(c=>`<option value="${c.id}">${c.name}${c.phone?" | "+c.phone:""}</option>`).join(""); renderInvoice(); loadLedger(); fillProductionProducts(); loadProduction(); loadStock(); setDatesV4(); loadExpenses(); loadWorkers(); loadTransport(); setReportDates(); loadReports(); purchaseDate.value=todayV6(); await initV8Identity(); loadHomeDashboard(); loadSuppliers(); loadSupplierOutstanding(); loadPurchases(); loadSettingsV6(); ensureInvoiceNumbers(); buildConsumptionInputs(); loadRawStock(); loadRoleV8(); loadActivityV8(); applyLanguage();
+saleCustomer.innerHTML=customers.map(c=>`<option value="${c.id}">${c.name}${c.phone?" | "+c.phone:""}</option>`).join("");payCustomer.innerHTML=saleCustomer.innerHTML;
+let st=sales.reduce((a,x)=>a+Number(x.total),0),pt=payments.reduce((a,x)=>a+Number(x.amount),0);salesTotal.textContent=money(st);paidTotal.textContent=money(pt);outTotal.textContent=money(st-pt);custTotal.textContent=customers.length;connection.textContent="Connected to cloud";connection.className="status success";
+customerList.innerHTML=customers.map(c=>`<div class="panel"><div class="item"><b>${c.name}</b><b>${money(0)}</b></div><div class="small">${c.phone||""}<br>${c.address||""}</div></div>`).join("");
+paymentList.innerHTML=payments.slice(-10).reverse().map(p=>`<div class="item"><span>Customer #${p.customer_id}<br><span class="small">${p.method||""}</span></span><b>${money(p.amount)}</b></div>`).join("");
+}catch(e){connection.textContent=e.message;connection.className="status warn"}
+}
+token=sessionStorage.getItem("mb_token");if(token){document.getElementById("loginPanel").style.display="none";document.getElementById("app").style.display="block"}render();
+</script>
+</body></html>
