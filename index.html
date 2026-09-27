@@ -355,7 +355,7 @@ function printLedger(){
   if(!cust)return alert("Customer not found");
 
   const name=cust.name||"Customer";
-  const phone=(cust.phone||"").replace(/\D/g,"");
+  const phone=(cust?.phone || ledgerCustomer.options[ledgerCustomer.selectedIndex].text.split("|")[1] || "").replace(/\D/g,"");
   const sales=ledgerSales.textContent;
   const paid=ledgerPaid.textContent;
   const balance=ledgerBalance.textContent;
