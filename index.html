@@ -787,7 +787,7 @@ let customers=await cr.json(),sales=await sr.json(),payments=await pr.json(); wi
 saleCustomer.innerHTML=customers.map(c=>`<option value="${c.id}">${c.name}${c.phone?" | "+c.phone:""}</option>`).join("");payCustomer.innerHTML=saleCustomer.innerHTML;
 let st=sales.reduce((a,x)=>a+Number(x.total),0),pt=payments.reduce((a,x)=>a+Number(x.amount),0);salesTotal.textContent=money(st);paidTotal.textContent=money(pt);outTotal.textContent=money(st-pt);custTotal.textContent=customers.length;connection.textContent="Connected to cloud";connection.className="status success";
 customerList.innerHTML=customers.map(c=>`<div class="panel"><div class="item"><b>${c.name}</b><b>${money(0)}</b></div><div class="small">${c.phone||""}<br>${c.address||""}</div></div>`).join("");
-paymentList.innerHTML=payments.slice(-10).reverse().map(p=>`<div class="item"><span>Customer #${p.customer_id}<br><span class="small">${p.method||""}</span></span><b>${money(p.amount)}</b></div>`).join("");
+paymentList.innerHTML=payments.slice(-10).reverse().map(p=>`<div class="item"><span>${(customers.find(c=>String(c.id)===String(p.customer_id))?.name)||"Customer"}<br><span class="small">${p.method||""}</span></span><b>${money(p.amount)}</b></div>`).join("");
 }catch(e){connection.textContent=e.message;connection.className="status warn"}
 }
 token=sessionStorage.getItem("mb_token");if(token){document.getElementById("loginPanel").style.display="none";document.getElementById("app").style.display="block"}if(token)render();
