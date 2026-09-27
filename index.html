@@ -116,7 +116,7 @@ body{padding-bottom:82px}
 <div class="card"><div class="label">Balance</div><div id="ledgerBalance" class="value">₹0</div></div>
 </div>
 </div>
-<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><b>Transactions</b><button class="blue" onclick="printLedger()">Print / PDF</button></div><div id="ledgerList"></div></div>
+<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><b>Transactions</b><div style="display:flex;gap:8px"><button class="blue" onclick="printLedger()">Print / PDF</button><button class="blue" onclick="shareLedgerWhatsApp()">📱 WhatsApp</button></div></div><div id="ledgerList"></div></div>
 </section>
 
 
@@ -347,6 +347,32 @@ function printLedger(){
   const title=ledgerCustomer.options[ledgerCustomer.selectedIndex].text;
   const body=`<html><head><title>Muthu Bricks Ledger</title><style>body{font-family:Arial;padding:30px}h1{color:#17324d}table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left}.right{text-align:right}</style></head><body><h1>MUTHU BRICKS</h1><p>Customer Ledger</p><h2>${title}</h2>${ledgerList.innerHTML}<hr><b>Sales: ${ledgerSales.textContent} &nbsp; Payments: ${ledgerPaid.textContent} &nbsp; Balance: ${ledgerBalance.textContent}</b><script>window.print()<\/script></body></html>`;
   const w=window.open("","_blank");w.document.write(body);w.document.close();
+}
+  function shareLedgerWhatsApp(){
+  const cid=ledgerCustomer.value;
+  if(!cid)return alert("Select a customer");
+  const cust=(window._customers||[]).find(c=>String(c.id)===String(cid));
+  if(!cust)return alert("Customer not found");
+
+  const name=cust.name||"Customer";
+  const phone=(cust.phone||"").replace(/\D/g,"");
+  const sales=ledgerSales.textContent;
+  const paid=ledgerPaid.textContent;
+  const balance=ledgerBalance.textContent;
+
+  if(phone)return alert("Customer phone number not available");
+
+  const message=`MUTHU BRICKS
+
+Customer: ${name}
+
+Total Sales: ${sales}
+Paid: ${paid}
+Outstanding Balance: ${balance}
+
+Thank you for doing business with Muthu Bricks!`;
+
+  window.open("https://wa.me/91"+phone+"?text="+encodeURIComponent(message),"_blank");
 }
 function renderInvoice(){
   if(!invoiceSelect.value){invoicePreview.innerHTML="";return}
