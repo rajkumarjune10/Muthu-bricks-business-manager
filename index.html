@@ -396,10 +396,17 @@ Thank you for doing business with Muthu Bricks!`;
   const paid=money(s.paid);
   const balance=money(Number(s.total)-Number(s.paid));
 
-  const message=`MUTHU BRICKS
+const items=(Array.isArray(s.items)?s.items:[]).map(i=>
+`${i.product||"Item"} - ${i.qty||0} ${i.unit||""} × ${money(i.rate||0)} = ${money(i.amount||0)}`
+).join("\n");
+
+const message=`MUTHU BRICKS
 
 Invoice: ${invoice}
 Customer: ${name}
+
+Items:
+${items}
 
 Total: ${total}
 Paid: ${paid}
