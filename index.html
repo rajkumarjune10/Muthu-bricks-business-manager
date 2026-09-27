@@ -338,7 +338,7 @@ async function loadLedger(){
     sales.forEach(s=>rows.push({date:s.sale_date,type:"Sale",ref:s.invoice_no||("Sale #"+s.id),amount:Number(s.total),sign:""}));
     payments.forEach(p=>rows.push({date:p.payment_date,type:"Payment",ref:p.method||"Payment",amount:Number(p.amount),sign:"-"}));
     rows.sort((a,b)=>new Date(b.date)-new Date(a.date));
-    ledgerList.innerHTML=rows.map(x=>`<div class="item"><span><b>${x.type}</b><br><span class="small">${new Date(x.date).toLocaleDateString("en-IN")} • ${x.ref}</span></span><b class="${x.type==="Payment"?"success":""}">${x.sign}${money(x.amount)}</b></div>`).join("")||'<div class="muted" style="padding:12px 0">No transactions.</div>';
+    ledgerList.innerHTML=`<div class="panel" style="margin-bottom:10px"><b>${cust?.name||"Customer"}</b><br><span class="small">${cust?.phone||""}</span></div>`+rows.map(x=>`<div class="item"><span><b>${x.type}</b><br><span class="small">${new Date(x.date).toLocaleDateString("en-IN")} • ${x.ref}</span></span><b class="${x.type==="Payment"?"success":""}">${x.sign}${money(x.amount)}</b></div>`).join("")||'<div class="muted" style="padding:12px 0">No transactions.</div>';
   }catch(e){ledgerList.innerHTML='<div class="status warn">Could not load ledger.</div>'}
 }
 function printLedger(){
