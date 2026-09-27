@@ -9,13 +9,13 @@
 <title>Muthu Bricks Business Manager</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f4f6f8;color:#17324d}
-header{background:#17324d;color:#fff;padding:17px 18px calc(17px + env(safe-area-inset-top));position:sticky;top:0;z-index:5}.brand{font-size:22px;font-weight:800}.sub{font-size:12px;opacity:.8}
-main{padding:16px 14px 90px;max-width:900px;margin:auto}.page{display:none}.page.active{display:block}h1{font-size:25px;margin:8px 0 4px}.muted{color:#71808f;font-size:13px}
+header{margin-left:230px;transition:margin-left .25s ease;background:#17324d;color:#fff;padding:17px 18px calc(17px + env(safe-area-inset-top));position:sticky;top:0;z-index:5}.brand{font-size:22px;font-weight:800}.sub{font-size:12px;opacity:.8}
+main{padding:16px 14px 90px;max-width:900px;margin:0 auto 0 230px;transition:margin-left .25s ease}.page{display:none}.page.active{display:block}h1{font-size:25px;margin:8px 0 4px}.muted{color:#71808f;font-size:13px}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.card,.panel{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px #17324d12}.label{font-size:12px;color:#71808f}.value{font-size:20px;font-weight:800;margin-top:5px}
 button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;background:#1f7a4d;color:#fff}.blue{background:#1f4e79}.danger{background:#a63d40}
 input,select,textarea{width:100%;padding:12px;border:1px solid #d8e0e6;border-radius:9px;font-size:15px;margin:6px 0 10px;background:#fff}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .item{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #edf0f2;padding:12px 0}.item:last-child{border:0}.small{font-size:12px}
-.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dfe5e9;display:grid;grid-template-columns:repeat(5,1fr);z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+.nav{position:fixed;top:0;left:0;bottom:0;width:230px;background:#fff;border-right:1px solid #dfe5e9;display:flex;flex-direction:column;z-index:1000;padding:70px 8px 15px;box-shadow:2px 0 12px #0001;transition:width .25s ease;overflow-y:auto}.nav.collapsed{width:70px}.nav button{background:#fff;color:#52606d;border-radius:10px;padding:12px 10px;font-size:13px;text-align:left;margin:2px 0;min-height:46px}.nav button.active{color:#17324d;background:#eef4f8}.nav.collapsed button{font-size:0;text-align:center;padding:12px 5px}.nav.collapsed button::first-letter{font-size:20px}
 .nav button{background:#fff;color:#52606d;border-radius:0;padding:8px 2px;font-size:10px}.nav button.active{color:#17324d;background:#eef4f8}
 .login{max-width:430px;margin:60px auto;padding:22px}.status{font-size:12px;margin-top:8px}.success{color:#1f7a4d}.warn{color:#9b6900}
 </style>
@@ -28,8 +28,6 @@ body{padding-bottom:82px}
   .card{padding:13px 10px}
   .card .value{font-size:20px}
   input,select,button{min-height:46px;font-size:16px}
-  nav{position:fixed!important;bottom:0;left:0;right:0;z-index:1000;background:#fff;box-shadow:0 -2px 12px #0002;overflow-x:auto;white-space:nowrap}
-  nav button{min-width:68px;padding:6px 4px;font-size:11px}
   .panel{border-radius:14px}
 }
 </style>
@@ -46,7 +44,7 @@ body{padding-bottom:82px}
 </div>
 
 <div id="app" style="display:none">
-<header><div class="brand">MUTHU BRICKS</div><div class="sub">Business Manager • Shared Cloud</div></header>
+<header><button id="menuToggle" onclick="toggleMenu()" style="position:absolute;left:245px;top:12px;background:#17324d;color:#fff;font-size:22px;padding:6px 10px;border-radius:8px;z-index:1100">☰</button><div class="brand">MUTHU BRICKS</div><div class="sub">Business Manager • Shared Cloud</div></header>
 <main>
 
 <section id="home" class="page" style="display:block">
@@ -312,6 +310,15 @@ const CONFIG={supabaseUrl:"https://fltwygoyctrutrpdjrjs.supabase.co",supabaseAno
 const PRODUCTS={"4 Inch Solid Block":["Piece",27],"6 Inch Solid Block":["Piece",34],"4x16 Inch Solid Block":["Piece",30],"6 Inch Interlock Brick":["Sqft",44],"8 Inch Interlock Brick":["Sqft",55],"60MM Paver Block":["Sqft",54],"80MM Paver Block":["Sqft",59]};
 let token=null,user=null,cart=[];
 const money=n=>"₹"+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+function toggleMenu(){
+  const nav = document.querySelector(".nav");
+  const btn = document.getElementById("menuToggle");
+  const collapsed = nav.classList.toggle("collapsed");
+
+  document.querySelector("main").style.marginLeft = collapsed ? "70px" : "230px";
+  document.querySelector("header").style.marginLeft = collapsed ? "70px" : "230px";
+  btn.style.left = collapsed ? "85px" : "245px";
+}
 function show(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));let n=document.getElementById("n-"+id);if(n)n.classList.add("active");render()}
 function api(path,opts={}){opts.headers=Object.assign({"Content-Type":"application/json"},opts.headers||{},token?{"Authorization":"Bearer "+token,"apikey":CONFIG.supabaseAnonKey}:{});return fetch(CONFIG.supabaseUrl+"/rest/v1/"+path,opts)}
 async function signIn(){const emailEl=document.getElementById("email");const passwordEl=document.getElementById("password");const loginMsgEl=document.getElementById("loginMsg");const loginPanelEl=document.getElementById("loginPanel");const appEl=document.getElementById("app");if(CONFIG.supabaseUrl.includes("PASTE_")){loginMsgEl.textContent="Cloud credentials are not configured yet.";loginMsgEl.className="status warn";return}loginMsgEl.textContent="Connecting to cloud...";try{let r=await fetch(CONFIG.supabaseUrl+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"Content-Type":"application/json","apikey":CONFIG.supabaseAnonKey},body:JSON.stringify({email:emailEl.value.trim(),password:passwordEl.value}),cache:"no-store"});let txt=await r.text();let d={};try{d=JSON.parse(txt)}catch(_){}if(!r.ok)throw Error(d.msg||d.error_description||d.error||txt||("Login failed ("+r.status+")"));if(!d.access_token)throw Error("No access token returned");token=d.access_token;user=d.user;sessionStorage.setItem("mb_token",token);loginPanelEl.style.display="none";appEl.style.display="block";await render()}catch(e){loginMsgEl.textContent="Login error: "+(e&&e.message?e.message:String(e));loginMsgEl.className="status warn"}}
