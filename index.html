@@ -44,7 +44,7 @@ body{padding-bottom:82px}
 </div>
 
 <div id="app" style="display:none">
-<header><button id="menuToggle" onclick="toggleMenu()" style="position:absolute;left:245px;top:12px;background:#17324d;color:#fff;font-size:22px;padding:6px 10px;border-radius:8px;z-index:1100">☰</button><div class="brand">MUTHU BRICKS</div><div class="sub">Business Manager • Shared Cloud</div></header>
+<header><button id="menuToggle" onclick="toggleMenu()" style="position:fixed;left:180px;top:12px;background:#17324d;color:#fff;font-size:22px;padding:6px 10px;border-radius:8px;z-index:1100">☰</button><div class="brand">MUTHU BRICKS</div><div class="sub">Business Manager • Shared Cloud</div></header>
 <main>
 
 <section id="home" class="page" style="display:block">
@@ -313,12 +313,13 @@ const money=n=>"₹"+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:
 function toggleMenu(){
   const nav = document.querySelector(".nav");
   const btn = document.getElementById("menuToggle");
-  const collapsed = nav.classList.toggle("collapsed");
-
+ const collapsed = nav.classList.toggle("collapsed");
   document.querySelector("main").style.marginLeft = collapsed ? "70px" : "230px";
   document.querySelector("header").style.marginLeft = collapsed ? "70px" : "230px";
-  btn.style.left = collapsed ? "85px" : "245px";
+  btn.style.left = collapsed ? "10px" : "180px";
 }
+document.querySelector("main").style.marginLeft = "230px";
+document.querySelector("header").style.marginLeft = "230px";
 function show(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));let n=document.getElementById("n-"+id);if(n)n.classList.add("active");render()}
 function api(path,opts={}){opts.headers=Object.assign({"Content-Type":"application/json"},opts.headers||{},token?{"Authorization":"Bearer "+token,"apikey":CONFIG.supabaseAnonKey}:{});return fetch(CONFIG.supabaseUrl+"/rest/v1/"+path,opts)}
 async function signIn(){const emailEl=document.getElementById("email");const passwordEl=document.getElementById("password");const loginMsgEl=document.getElementById("loginMsg");const loginPanelEl=document.getElementById("loginPanel");const appEl=document.getElementById("app");if(CONFIG.supabaseUrl.includes("PASTE_")){loginMsgEl.textContent="Cloud credentials are not configured yet.";loginMsgEl.className="status warn";return}loginMsgEl.textContent="Connecting to cloud...";try{let r=await fetch(CONFIG.supabaseUrl+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"Content-Type":"application/json","apikey":CONFIG.supabaseAnonKey},body:JSON.stringify({email:emailEl.value.trim(),password:passwordEl.value}),cache:"no-store"});let txt=await r.text();let d={};try{d=JSON.parse(txt)}catch(_){}if(!r.ok)throw Error(d.msg||d.error_description||d.error||txt||("Login failed ("+r.status+")"));if(!d.access_token)throw Error("No access token returned");token=d.access_token;user=d.user;sessionStorage.setItem("mb_token",token);loginPanelEl.style.display="none";appEl.style.display="block";await render()}catch(e){loginMsgEl.textContent="Login error: "+(e&&e.message?e.message:String(e));loginMsgEl.className="status warn"}}
