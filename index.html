@@ -360,7 +360,7 @@ function printLedger(){
   const paid=ledgerPaid.textContent;
   const balance=ledgerBalance.textContent;
 
-  if(phone)return alert("Customer phone number not available");
+  if(!phone)return alert("Customer phone number not available");
 
   const message=`MUTHU BRICKS
 
