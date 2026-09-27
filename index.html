@@ -416,8 +416,103 @@ function addItem(){let q=Number(qty.value),r=Number(rate.value);if(!q||q<0||r<0)
 function updateCart(){saleItems.innerHTML=cart.map((x,i)=>`<div class="item"><span>${x.product}<br><span class="small">${x.qty} ${x.unit} × ${money(x.rate)}</span></span><b>${money(x.amount)} <button class="danger" onclick="cart.splice(${i},1);updateCart()">×</button></b></div>`).join("");let sub=cart.reduce((a,x)=>a+x.amount,0),total=Math.max(0,sub+Number(transport.value||0)-Number(discount.value||0));saleTotal.textContent=money(total)}
 ["transport","discount"].forEach(id=>document.getElementById(id).addEventListener("input",updateCart));
 async function saveSale(){if(!cart.length)return alert("Add an item");if(!saleCustomer.value)return alert("Select a customer");if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Cloud database is not configured yet.");let sub=cart.reduce((a,x)=>a+x.amount,0),total=Math.max(0,sub+Number(transport.value||0)-Number(discount.value||0)),p=Number(paid.value||0);if(p<0||p>total)return alert("Invalid payment");let r=await api("sales",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify({customer_id:Number(saleCustomer.value),subtotal:sub,transport:Number(transport.value||0),discount:Number(discount.value||0),total,paid:p,items:cart})});if(!r.ok)return alert(await r.text());cart=[];paid.value=transport.value=discount.value=0;await render();alert("Sale saved")}
-async function addPayment(){if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Cloud database is not configured yet.");let amount=Number(payAmount.value);if(!payCustomer.value||amount<=0)return alert("Select customer and amount");let r=await api("payments",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({customer_id:Number(payCustomer.value),amount,method:payMethod.value,note:payNote.value})});if(!r.ok)return alert(await r.text());payAmount.value=payNote.value="";await render();alert("Payment saved")}
+let editingPaymentId = null;
 
+async function addPayment(){
+
+  if(CONFIG.supabaseUrl.includes("PASTE_"))
+    return alert("Cloud database is not configured yet.");
+
+  let amount = Number(payAmount.value);
+
+  if(!payCustomer.value || amount <= 0)
+    return alert("Select customer and enter valid amount");
+
+  const body = {
+    customer_id: Number(payCustomer.value),
+    amount: amount,
+    method: payMethod.value,
+    note: payNote.value.trim()
+  };
+
+  try{
+
+    // EDIT EXISTING PAYMENT
+    if(editingPaymentId){
+
+      let r = await api(
+        "payments?id=eq."+encodeURIComponent(editingPaymentId),
+        {
+          method:"PATCH",
+          headers:{
+            "Prefer":"return=minimal"
+          },
+          body:JSON.stringify(body)
+        }
+      );
+
+      if(!r.ok) throw Error(await r.text());
+
+      editingPaymentId = null;
+
+      payAmount.value = "";
+      payNote.value = "";
+
+      await render();
+
+      alert("Payment updated successfully");
+
+      return;
+    }
+
+    // ADD NEW PAYMENT
+    let r = await api(
+      "payments",
+      {
+        method:"POST",
+        headers:{
+          "Prefer":"return=minimal"
+        },
+        body:JSON.stringify(body)
+      }
+    );
+
+    if(!r.ok) throw Error(await r.text());
+
+    payAmount.value = "";
+    payNote.value = "";
+
+    await render();
+
+    alert("Payment saved");
+
+  }catch(e){
+    alert("Could not save payment: "+e.message);
+  }
+}
+
+
+function editPayment(id){
+
+  const payment = (window._payments || [])
+    .find(p => String(p.id) === String(id));
+
+  if(!payment){
+    return alert("Payment not found");
+  }
+
+  editingPaymentId = payment.id;
+
+  payCustomer.value = String(payment.customer_id);
+  payAmount.value = payment.amount || "";
+  payMethod.value = payment.method || "Cash";
+  payNote.value = payment.note || "";
+
+  show("payment");
+
+  document.querySelector('#payment button[onclick="addPayment()"]').textContent =
+    "Update Payment";
+}
 async function loadLedger(){
   if(CONFIG.supabaseUrl.includes("PASTE_")) return;
   const cid=ledgerCustomer.value;
@@ -945,11 +1040,11 @@ if(CONFIG.supabaseUrl.includes("PASTE_")){connection.textContent="Cloud setup pe
 try{
 let [cr,sr,pr]=await Promise.all([api("customers?select=*"),api("sales?select=*"),api("payments?select=*")]);
 if(!cr.ok||!sr.ok||!pr.ok)throw Error("Database request failed");
-let customers=await cr.json(),sales=await sr.json(),payments=await pr.json(); window._invoiceSales=sales; window._customers=customers; invoiceSelect.innerHTML=sales.map(s=>`<option value="${s.id}">${s.invoice_no||("Sale #"+s.id)}</option>`).join(""); ledgerCustomer.innerHTML=customers.map(c=>`<option value="${c.id}">${c.name}${c.phone?" | "+c.phone:""}</option>`).join(""); renderInvoice(); loadLedger(); fillProductionProducts(); loadProduction(); loadStock(); setDatesV4(); loadExpenses(); loadWorkers(); loadTransport(); setReportDates(); loadReports(); purchaseDate.value=todayV6(); await initV8Identity(); loadHomeDashboard(); loadSuppliers(); loadSupplierOutstanding(); loadPurchases(); loadSettingsV6(); ensureInvoiceNumbers(); buildConsumptionInputs(); loadRawStock(); loadRoleV8(); loadActivityV8(); applyLanguage();
+let customers=await cr.json(),sales=await sr.json(),payments=await pr.json(); window._payments=payments; window._invoiceSales=sales; window._customers=customers; invoiceSelect.innerHTML=sales.map(s=>`<option value="${s.id}">${s.invoice_no||("Sale #"+s.id)}</option>`).join(""); ledgerCustomer.innerHTML=customers.map(c=>`<option value="${c.id}">${c.name}${c.phone?" | "+c.phone:""}</option>`).join(""); renderInvoice(); loadLedger(); fillProductionProducts(); loadProduction(); loadStock(); setDatesV4(); loadExpenses(); loadWorkers(); loadTransport(); setReportDates(); loadReports(); purchaseDate.value=todayV6(); await initV8Identity(); loadHomeDashboard(); loadSuppliers(); loadSupplierOutstanding(); loadPurchases(); loadSettingsV6(); ensureInvoiceNumbers(); buildConsumptionInputs(); loadRawStock(); loadRoleV8(); loadActivityV8(); applyLanguage();
 saleCustomer.innerHTML=customers.map(c=>`<option value="${c.id}">${c.name}${c.phone?" | "+c.phone:""}</option>`).join("");payCustomer.innerHTML=saleCustomer.innerHTML;
 let st=sales.reduce((a,x)=>a+Number(x.total),0),pt=payments.reduce((a,x)=>a+Number(x.amount),0);salesTotal.textContent=money(st);paidTotal.textContent=money(pt);outTotal.textContent=money(st-pt);custTotal.textContent=customers.length;connection.textContent="Connected to cloud";connection.className="status success";
 customerList.innerHTML=customers.map(c=>` <div class="panel">   <div class="item">     <div>       <b>${c.name}</b>       <div class="small">         ${c.phone||""}<br>         ${c.address||""}       </div>     </div>      <button       class="blue"       onclick="editCustomer('${c.id}')">       ✏️ Edit     </button>   </div> </div> `).join("");
-paymentList.innerHTML=payments.slice(-10).reverse().map(p=>`<div class="item"><span>${(customers.find(c=>String(c.id)===String(p.customer_id))?.name)||"Customer"}<br><span class="small">${p.method||""}</span></span><b>${money(p.amount)}</b></div>`).join("");
+paymentList.innerHTML=payments.slice(-10).reverse().map(p=>` <div class="item">   <span>     ${(customers.find(c=>String(c.id)===String(p.customer_id))?.name)||"Customer"}     <br>     <span class="small">${p.method||""}${p.note?" • "+p.note:""}</span>   </span>    <span style="display:flex;align-items:center;gap:8px">     <b>${money(p.amount)}</b>     <button class="blue" onclick="editPayment('${p.id}')">✏️ Edit</button>   </span> </div> `).join("");
 }catch(e){connection.textContent=e.message;connection.className="status warn"}
 }
 token=sessionStorage.getItem("mb_token");if(token){document.getElementById("loginPanel").style.display="none";document.getElementById("app").style.display="block"}if(token)render();
