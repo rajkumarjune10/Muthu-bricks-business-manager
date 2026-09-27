@@ -100,7 +100,10 @@ body{padding-bottom:82px}
 <div class="panel">
 <label>Invoice</label><select id="invoiceSelect" onchange="renderInvoice()"></select>
 <div id="invoicePreview" style="margin-top:14px"></div>
-<button class="blue" style="width:100%;margin-top:12px" onclick="printInvoice()">PRINT / SAVE PDF</button>
+<div style="display:flex;gap:8px;margin-top:12px">
+<button class="blue" style="flex:1" onclick="printInvoice()">PRINT / SAVE PDF</button>
+<button class="blue" style="flex:1" onclick="shareInvoiceWhatsApp()">📱 WhatsApp</button>
+</div>
 </div>
 </section>
 
@@ -369,6 +372,38 @@ Customer: ${name}
 Total Sales: ${sales}
 Paid: ${paid}
 Outstanding Balance: ${balance}
+
+Thank you for doing business with Muthu Bricks!`;
+
+  window.open("https://wa.me/91"+phone+"?text="+encodeURIComponent(message),"_blank");
+}
+  function shareInvoiceWhatsApp(){
+  if(!invoiceSelect.value)return alert("Select an invoice");
+
+  const s=(window._invoiceSales||[]).find(x=>String(x.id)===String(invoiceSelect.value));
+  if(!s)return alert("Invoice not found");
+
+  const cust=(window._customers||[]).find(c=>String(c.id)===String(s.customer_id));
+  if(!cust)return alert("Customer not found");
+
+  const name=cust.name||"Customer";
+  const phone=(cust.phone||"").replace(/\D/g,"");
+
+  if(!phone)return alert("Customer phone number not available");
+
+  const invoice=s.invoice_no||((V6_SETTINGS.invoice_prefix||"MB")+"-"+s.id);
+  const total=money(s.total);
+  const paid=money(s.paid);
+  const balance=money(Number(s.total)-Number(s.paid));
+
+  const message=`MUTHU BRICKS
+
+Invoice: ${invoice}
+Customer: ${name}
+
+Total: ${total}
+Paid: ${paid}
+Balance: ${balance}
 
 Thank you for doing business with Muthu Bricks!`;
 
