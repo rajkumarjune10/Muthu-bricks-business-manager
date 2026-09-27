@@ -44,7 +44,7 @@ body{padding-bottom:82px}
 </div>
 
 <div id="app" style="display:none">
-<header><button id="menuToggle" onclick="toggleMenu()" style="position:fixed;left:180px;top:12px;background:#17324d;color:#fff;font-size:22px;padding:6px 10px;border-radius:8px;z-index:1100">☰</button><div class="brand">MUTHU BRICKS</div><div class="sub">Business Manager • Shared Cloud</div></header>
+<header><button id="menuToggle" onclick="toggleMenu()" style="position:fixed;left:10px;top:12px;background:#17324d;color:#fff;font-size:22px;padding:6px 10px;border-radius:8px;z-index:1100">☰</button><div class="brand">MUTHU BRICKS</div><div class="sub">Business Manager • Shared Cloud</div></header>
 <main>
 
 <section id="home" class="page" style="display:block">
@@ -316,7 +316,7 @@ function toggleMenu(){
  const collapsed = nav.classList.toggle("collapsed");
   document.querySelector("main").style.marginLeft = collapsed ? "70px" : "230px";
   document.querySelector("header").style.marginLeft = collapsed ? "70px" : "230px";
-  btn.style.left = collapsed ? "10px" : "180px";
+  btn.style.left = "10px";
 }
 document.querySelector("main").style.marginLeft = "230px";
 document.querySelector("header").style.marginLeft = "230px";
