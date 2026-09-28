@@ -1231,9 +1231,14 @@ async function loadRawStock(){
 rawStockCards.innerHTML=RAW_MATERIALS.map(m=>{
 const item=(window._rawMaterials||[]).find(x=>x.name===m);
 const stock=totals[m]||0;
+const unit=item?.unit||"kg";
+const minStock=Number(item?.min_stock||0);
+const low=stock<minStock;
+
 return `<div class="card">
 <div class="label">${m}</div>
-<div class="value">${stock.toLocaleString("en-IN")}</div>
+<div class="value">${stock.toLocaleString("en-IN")} <span style="font-size:14px">${unit}</span></div>
+${minStock>0?`<div class="small">${low?"⚠️ Low Stock":"Minimum stock"}: ${minStock} ${unit}</div>`:""}
 <div style="display:flex;gap:6px;margin-top:8px">
 <button class="blue" onclick="showRawMaterialForm('${item?.id||""}')">✏️ Edit</button>
 <button class="danger" onclick="deleteRawMaterial('${item?.id||""}')">🗑️ Delete</button>
