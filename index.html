@@ -321,7 +321,141 @@ document.querySelector("main").style.marginLeft = "230px";
 document.querySelector("header").style.marginLeft = "230px";
 function show(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));let n=document.getElementById("n-"+id);if(n)n.classList.add("active");render()}
 function api(path,opts={}){opts.headers=Object.assign({"Content-Type":"application/json"},opts.headers||{},token?{"Authorization":"Bearer "+token,"apikey":CONFIG.supabaseAnonKey}:{});return fetch(CONFIG.supabaseUrl+"/rest/v1/"+path,opts)}
-async function signIn(){const emailEl=document.getElementById("email");const passwordEl=document.getElementById("password");const loginMsgEl=document.getElementById("loginMsg");const loginPanelEl=document.getElementById("loginPanel");const appEl=document.getElementById("app");if(CONFIG.supabaseUrl.includes("PASTE_")){loginMsgEl.textContent="Cloud credentials are not configured yet.";loginMsgEl.className="status warn";return}loginMsgEl.textContent="Connecting to cloud...";try{let r=await fetch(CONFIG.supabaseUrl+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"Content-Type":"application/json","apikey":CONFIG.supabaseAnonKey},body:JSON.stringify({email:emailEl.value.trim(),password:passwordEl.value}),cache:"no-store"});let txt=await r.text();let d={};try{d=JSON.parse(txt)}catch(_){}if(!r.ok)throw Error(d.msg||d.error_description||d.error||txt||("Login failed ("+r.status+")"));if(!d.access_token)throw Error("No access token returned");token=d.access_token;user=d.user;sessionStorage.setItem("mb_token",token);loginPanelEl.style.display="none";appEl.style.display="block";await render()}catch(e){loginMsgEl.textContent="Login error: "+(e&&e.message?e.message:String(e));loginMsgEl.className="status warn"}}
+let editingProductId=null;
+
+async function loadProducts(){
+  try{
+    const r=await api("products?select=*&active=eq.true&order=name");
+    if(!r.ok) throw Error(await r.text());
+    const products=await r.json();
+    window._products=products;
+
+    priceList.innerHTML=products.map(p=>`
+      <div class="item">
+        <span>
+          <b>${p.name}</b><br>
+          <span class="small">${p.unit} • ${money(p.rate)}</span>
+        </span>
+        <span style="display:flex;gap:6px">
+          <button class="blue" onclick="showProductForm(${p.id})">✏️</button>
+          <button class="danger" onclick="deactivateProduct(${p.id})">🗑️</button>
+        </span>
+      </div>
+    `).join("") || '<div class="muted">No products yet.</div>';
+
+    product.innerHTML=products.map(p=>
+      `<option value="${p.name}">${p.name}</option>`
+    ).join("");
+
+    if(products.length){
+      rate.value=products[0].rate;
+    }
+  }catch(e){
+    console.error(e);
+    priceList.innerHTML='<div class="muted">Could not load products.</div>';
+  }
+}
+
+function showProductForm(id=null){
+  editingProductId=id;
+  productForm.style.display="block";
+
+  if(id){
+    const p=(window._products||[]).find(x=>String(x.id)===String(id));
+    if(!p)return;
+    productFormTitle.textContent="Edit Product";
+    prodName.value=p.name;
+    prodUnit.value=p.unit;
+    prodRate.value=p.rate;
+  }else{
+    productFormTitle.textContent="Add Product";
+    prodName.value="";
+    prodUnit.value="Piece";
+    prodRate.value="";
+  }
+
+  productForm.scrollIntoView({behavior:"smooth"});
+}
+
+function hideProductForm(){
+  editingProductId=null;
+  productForm.style.display="none";
+}
+
+async function saveProduct(){
+  const name=prodName.value.trim();
+  const unit=prodUnit.value;
+  const rateValue=Number(prodRate.value);
+
+  if(!name)return alert("Enter product name");
+  if(rateValue<0)return alert("Enter valid rate");
+
+  try{
+    let r;
+
+    if(editingProductId){
+      r=await api(
+        "products?id=eq."+encodeURIComponent(editingProductId),
+        {
+          method:"PATCH",
+          headers:{"Prefer":"return=minimal"},
+          body:JSON.stringify({
+            name,
+            unit,
+            rate:rateValue,
+            updated_at:new Date().toISOString()
+          })
+        }
+      );
+    }else{
+      r=await api(
+        "products",
+        {
+          method:"POST",
+          headers:{"Prefer":"return=minimal"},
+          body:JSON.stringify({
+            name,
+            unit,
+            rate:rateValue
+          })
+        }
+      );
+    }
+
+    if(!r.ok)throw Error(await r.text());
+
+    hideProductForm();
+    await loadProducts();
+    alert(editingProductId?"Product updated":"Product added");
+  }catch(e){
+    alert("Could not save product: "+e.message);
+  }
+}
+
+async function deactivateProduct(id){
+  if(!confirm("Remove this product from the active price list?"))return;
+
+  try{
+    const r=await api(
+      "products?id=eq."+encodeURIComponent(id),
+      {
+        method:"PATCH",
+        headers:{"Prefer":"return=minimal"},
+        body:JSON.stringify({
+          active:false,
+          updated_at:new Date().toISOString()
+        })
+      }
+    );
+
+    if(!r.ok)throw Error(await r.text());
+
+    await loadProducts();
+  }catch(e){
+    alert("Could not remove product: "+e.message);
+  }
+}
+  async function signIn(){const emailEl=document.getElementById("email");const passwordEl=document.getElementById("password");const loginMsgEl=document.getElementById("loginMsg");const loginPanelEl=document.getElementById("loginPanel");const appEl=document.getElementById("app");if(CONFIG.supabaseUrl.includes("PASTE_")){loginMsgEl.textContent="Cloud credentials are not configured yet.";loginMsgEl.className="status warn";return}loginMsgEl.textContent="Connecting to cloud...";try{let r=await fetch(CONFIG.supabaseUrl+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"Content-Type":"application/json","apikey":CONFIG.supabaseAnonKey},body:JSON.stringify({email:emailEl.value.trim(),password:passwordEl.value}),cache:"no-store"});let txt=await r.text();let d={};try{d=JSON.parse(txt)}catch(_){}if(!r.ok)throw Error(d.msg||d.error_description||d.error||txt||("Login failed ("+r.status+")"));if(!d.access_token)throw Error("No access token returned");token=d.access_token;user=d.user;sessionStorage.setItem("mb_token",token);loginPanelEl.style.display="none";appEl.style.display="block";await render()}catch(e){loginMsgEl.textContent="Login error: "+(e&&e.message?e.message:String(e));loginMsgEl.className="status warn"}}
 function logout(){sessionStorage.removeItem("mb_token");location.reload()}
 let editingCustomerId = null;
 
