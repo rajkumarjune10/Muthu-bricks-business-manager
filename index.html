@@ -861,8 +861,7 @@ async function loadStock(){
   const rows=await r.json(), totals={};
   STOCK_PRODUCTS.forEach(p=>totals[p.name]=0);
   rows.forEach(x=>{if(totals[x.product]===undefined)totals[x.product]=0;totals[x.product]+=Number(x.qty)*(x.movement_type==="SALE"?-1:1)});
-  stockCards.innerHTML=STOCK_PRODUCTS.map(p=>`<div class="card"><div class="label">${p.name}</div><div class="value">${(totals[p.name]||0).toLocaleString("en-IN")} <span style="font-size:12px">${p.unit}</span></div></div>`).join("");
-  stockMovement.innerHTML=rows.slice(0,30).map(x=>`<div class="item"><span><b>${x.product}</b><br><span class="small">${new Date(x.movement_date).toLocaleDateString("en-IN")} • ${x.movement_type}</span></span><b>${x.movement_type==="SALE"?"-":"+"}${Number(x.qty).toLocaleString("en-IN")} ${x.unit}</b></div>`).join("")||'<div class="muted">No stock movements.</div>';
+stockCards.innerHTML=STOCK_PRODUCTS.map(p=>{const stock=totals[p.name]||0;const min=Number((window._products||[]).find(x=>x.name===p.name)?.min_stock||0);const low=min>0&&stock<=min;return `<div class="card"><div class="label">${p.name}</div><div class="value">${stock.toLocaleString("en-IN")} <span style="font-size:12px">${p.unit}</span></div>${low?`<div style="margin-top:6px;color:#b45309;font-weight:700">⚠️ Low Stock • Minimum ${min.toLocaleString("en-IN")} ${p.unit}</div>`:""}</div>`}).join("");  stockMovement.innerHTML=rows.slice(0,30).map(x=>`<div class="item"><span><b>${x.product}</b><br><span class="small">${new Date(x.movement_date).toLocaleDateString("en-IN")} • ${x.movement_type}</span></span><b>${x.movement_type==="SALE"?"-":"+"}${Number(x.qty).toLocaleString("en-IN")} ${x.unit}</b></div>`).join("")||'<div class="muted">No stock movements.</div>';
  }catch(e){stockMovement.innerHTML='<div class="status warn">Run the V3 schema.sql in Supabase first.</div>'}
 }
 
