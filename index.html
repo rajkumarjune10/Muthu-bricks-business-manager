@@ -328,6 +328,8 @@ async function loadProducts(){
     const r=await api("products?select=*&active=eq.true&order=name");
     if(!r.ok) throw Error(await r.text());
     const products=await r.json();
+    Object.keys(PRODUCTS).forEach(k=>delete PRODUCTS[k]);
+products.forEach(p=>PRODUCTS[p.name]=[p.unit,Number(p.rate)]);
     window._products=products;
 
     priceList.innerHTML=products.map(p=>`
