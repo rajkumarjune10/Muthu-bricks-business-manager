@@ -1219,7 +1219,7 @@ return `<div class="card">
 <div class="label">${m}</div>
 <div class="value">${stock.toLocaleString("en-IN")}</div>
 <div style="display:flex;gap:6px;margin-top:8px">
-<button class="blue" onclick="editRawMaterial('${item?.id||""}')">✏️ Edit</button>
+<button class="blue" onclick="showRawMaterialForm('${item?.id||""}')">✏️ Edit</button>
 <button class="danger" onclick="deleteRawMaterial('${item?.id||""}')">🗑️ Delete</button>
 </div>
 </div>`;
