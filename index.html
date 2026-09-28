@@ -1095,17 +1095,33 @@ async function backupData(){
 
 let editingRawMaterialId=null;
 
-function showRawMaterialForm(id=null){
+async function showRawMaterialForm(id=null){
   editingRawMaterialId=id;
   rawMaterialForm.style.display="block";
 
   if(id){
-    const m=(window._rawMaterials||[]).find(x=>String(x.id)===String(id));
-    if(!m)return;
-    rawMaterialFormTitle.textContent="Edit Raw Material";
-    rawMaterialName.value=m.name;
-    rawMaterialUnit.value=m.unit;
-    rawMaterialMinStock.value=m.min_stock||0;
+    try{
+      const r=await api("raw_materials?id=eq."+id+"&active=eq.true&select=*");
+      if(!r.ok)throw Error(await r.text());
+
+      const rows=await r.json();
+      const m=rows[0];
+
+      if(!m){
+        alert("Raw material not found.");
+        hideRawMaterialForm();
+        return;
+      }
+
+      rawMaterialFormTitle.textContent="Edit Raw Material";
+      rawMaterialName.value=m.name;
+      rawMaterialUnit.value=m.unit||"kg";
+      rawMaterialMinStock.value=m.min_stock||0;
+    }catch(e){
+      alert("Could not load raw material: "+e.message);
+      hideRawMaterialForm();
+      return;
+    }
   }else{
     rawMaterialFormTitle.textContent="Add Raw Material";
     rawMaterialName.value="";
