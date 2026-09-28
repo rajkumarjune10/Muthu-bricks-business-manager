@@ -853,7 +853,7 @@ async function loadProduction(){
 async function loadStock(){
  if(CONFIG.supabaseUrl.includes("PASTE_"))return;
  try{
-  const r=await api("stock_movements?select=*&order=movement_date.desc,created_at.desc");
+  const r=await api("stock_movements?select=*&order=movement_date.desc,created_at.desc"); if(!r.ok)throw new Error(await r.text());
   const rows=await r.json(), totals={};
   STOCK_PRODUCTS.forEach(p=>totals[p.name]=0);
   rows.forEach(x=>{if(totals[x.product]===undefined)totals[x.product]=0;totals[x.product]+=Number(x.qty)*(x.movement_type==="SALE"?-1:1)});
