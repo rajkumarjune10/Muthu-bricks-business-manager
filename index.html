@@ -1077,11 +1077,56 @@ purchaseRate.addEventListener("input", updatePurchaseCalculation);
 
 purchaseTotal.readOnly = true;
 async function savePurchase(){
- if(CONFIG.supabaseUrl.includes("PASTE_"))return alert("Configure Supabase first.");
- const total=Number(purchaseTotal.value)||(Number(purchaseQty.value)*Number(purchaseRate.value));
- if(!total)return alert("Enter purchase total.");
- try{const r=await api("purchases",{method:"POST",body:{purchase_date:purchaseDate.value,supplier_id:purchaseSupplier.value?Number(purchaseSupplier.value):null,material:purchaseMaterial.value,qty:Number(purchaseQty.value)||0,unit:purchaseUnit.value||null,rate:Number(purchaseRate.value)||0,total,paid:Number(purchasePaid.value)||0,notes:purchaseNotes.value||null}});
- if(!r.ok)throw Error(await r.text());purchaseQty.value="";purchaseRate.value="";purchaseTotal.value="";purchasePaid.value="";purchaseNotes.value="";await loadPurchases();await loadRawStock();await logActivity("PURCHASE_SAVED","Purchases",{material:purchaseMaterial.value,total});alert("Purchase saved.");}catch(e){alert("Could not save purchase: "+e.message)}
+  if(CONFIG.supabaseUrl.includes("PASTE_"))
+    return alert("Configure Supabase first.");
+
+  const qty = Number(purchaseQty.value) || 0;
+  const rate = Number(purchaseRate.value) || 0;
+  const total = qty * rate;
+  const paid = Number(purchasePaid.value) || 0;
+
+  if(qty <= 0)
+    return alert("Enter purchase quantity.");
+
+  if(rate < 0)
+    return alert("Enter valid purchase rate.");
+
+  purchaseTotal.value = total.toFixed(2);
+
+  const body = {
+    purchase_date: purchaseDate.value,
+    supplier_id: purchaseSupplier.value || null,
+    material: purchaseMaterial.value,
+    qty: qty,
+    unit: purchaseUnit.value,
+    rate: rate,
+    total: total,
+    paid: paid,
+    notes: purchaseNotes.value || null
+  };
+
+  try{
+    const r = await api("purchases", {
+      method:"POST",
+      body:JSON.stringify(body)
+    });
+
+    if(!r.ok)
+      throw Error(await r.text());
+
+    purchaseQty.value = "";
+    purchaseRate.value = "";
+    purchaseTotal.value = "";
+    purchasePaid.value = "";
+    purchaseNotes.value = "";
+
+    await loadPurchases();
+    await loadRawStock();
+
+    alert("Purchase saved successfully.");
+  }catch(e){
+    alert("Could not save purchase: " + e.message);
+  }
 }
 async function loadPurchases(){
  if(CONFIG.supabaseUrl.includes("PASTE_"))return;
