@@ -299,7 +299,7 @@ body{padding-bottom:82px}
 <div class="panel"><b>Activity History</b><div id="activityList"></div></div>
 </section>
 
-<section id="more" class="page"><h1>More</h1><div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b>Products & Prices</b><button class="blue" onclick="showProductForm()">➕ Add Product</button></div><div class="muted" style="margin:8px 0 14px">Manage your products, units and selling rates.</div><div id="priceList"></div></div><div id="productForm" class="panel" style="display:none"><b id="productFormTitle">Add Product</b><input id="prodName" placeholder="Product name"><select id="prodUnit"><option>Piece</option><option>Sqft</option><option>Kg</option><option>Load</option><option>Nos</option></select><input id="prodRate" type="number" step="0.01" placeholder="Selling rate"><div style="display:flex;gap:8px"><button onclick="saveProduct()">SAVE</button><button class="danger" onclick="hideProductForm()">CANCEL</button></div></div><div class="panel"><b>Coming next</b><div class="muted">Production • Stock • Expenses • Workers • Transport • PDF invoices • Reports • Backup</div></div>
+<section id="more" class="page"><h1>More</h1><div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b>Products & Prices</b><button class="blue" onclick="showProductForm()">➕ Add Product</button></div><div class="muted" style="margin:8px 0 14px">Manage your products, units and selling rates.</div><div id="priceList"></div></div><div id="productForm" class="panel" style="display:none"><b id="productFormTitle">Add Product</b><input id="prodName" placeholder="Product name"><select id="prodUnit"><option>Piece</option><option>Sqft</option><option>Kg</option><option>Load</option><option>Nos</option></select><input id="prodRate" type="number" step="0.01" placeholder="Selling rate"><input id="prodMinStock" type="number" step="0.01" placeholder="Minimum stock level"><div style="display:flex;gap:8px"><button onclick="saveProduct()">SAVE</button><button class="danger" onclick="hideProductForm()">CANCEL</button></div></div><div class="panel"><b>Coming next</b><div class="muted">Production • Stock • Expenses • Workers • Transport • PDF invoices • Reports • Backup</div></div>
 <button class="danger" onclick="logout()" style="margin-top:10px">Sign out</button></section>
 </main>
 <nav class="nav"><button onclick="show('dashboard')" id="n-dashboard">🏠<br>Home</button><button onclick="show('sale')" id="n-sale">🧾<br>Sales</button><button onclick="show('customer')" id="n-customer">👤<br>Customers</button><button onclick="show('payment')" id="n-payment">💰<br>Payments</button><button onclick="show('ledger')" id="n-ledger">📒<br>Ledger</button><button onclick="show('invoice')" id="n-invoice">🧾<br>Invoice</button><button onclick="show('production')" id="n-production">🏭<br>Production</button><button onclick="show('stock')" id="n-stock">📦<br>Stock</button><button onclick="show('reports')" id="n-reports">📊<br>Reports</button><button onclick="show('purchases')" id="n-purchases">🛒<br>Purchases</button><button onclick="show('rawstock')" id="n-rawstock">🧱<br>Raw Stock</button><button onclick="show('suppliers')" id="n-suppliers">🏢<br>Suppliers</button><button onclick="show('expenses')" id="n-expenses">💸<br>Expenses</button><button onclick="show('workers')" id="n-workers">👷<br>Workers</button><button onclick="show('transport')" id="n-transport">🚚<br>Transport</button><button onclick="show('users')" id="n-users">👥<br>Users</button><button onclick="show('settings')" id="n-settings">⚙️<br>Settings</button><button onclick="show('more')" id="n-more">☰<br>More</button></nav>
@@ -369,6 +369,7 @@ function showProductForm(id=null){
     prodName.value=p.name;
     prodUnit.value=p.unit;
     prodRate.value=p.rate;
+    prodMinStock.value=p.min_stock||0;
   }else{
     productFormTitle.textContent="Add Product";
     prodName.value="";
@@ -388,6 +389,7 @@ async function saveProduct(){
   const name=prodName.value.trim();
   const unit=prodUnit.value;
   const rateValue=Number(prodRate.value);
+  const minStock=Number(prodMinStock.value)||0;
 
   if(!name)return alert("Enter product name");
   if(rateValue<0)return alert("Enter valid rate");
@@ -404,8 +406,9 @@ async function saveProduct(){
           body:JSON.stringify({
             name,
             unit,
-            rate:rateValue,
-            updated_at:new Date().toISOString()
+          rate:rateValue,
+min_stock:minStock,
+updated_at:new Date().toISOString()
           })
         }
       );
@@ -416,9 +419,10 @@ async function saveProduct(){
           method:"POST",
           headers:{"Prefer":"return=minimal"},
           body:JSON.stringify({
-            name,
-            unit,
-            rate:rateValue
+           name,
+unit,
+rate:rateValue,
+min_stock:minStock
           })
         }
       );
