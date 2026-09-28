@@ -265,8 +265,23 @@ body{padding-bottom:82px}
 
 
 <section id="rawstock" class="page">
-<h1>Raw Material Stock</h1>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"> <h1 style="margin:0">Raw Material Stock</h1> <button class="blue" onclick="showRawMaterialForm()">➕ Add Material</button> </div>
 <div class="muted">Purchase receipts and production consumption</div>
+  <div id="rawMaterialForm" class="panel" style="display:none">
+  <h3 id="rawMaterialFormTitle">Add Raw Material</h3>
+  <input id="rawMaterialName" placeholder="Material name">
+  <select id="rawMaterialUnit">
+    <option value="kg">Kg</option>
+    <option value="bag">Bag</option>
+    <option value="ton">Ton</option>
+    <option value="load">Load</option>
+    <option value="litre">Litre</option>
+    <option value="piece">Piece</option>
+  </select>
+  <input id="rawMaterialMinStock" type="number" step="0.01" placeholder="Minimum stock">
+  <button class="green" onclick="saveRawMaterial()">SAVE</button>
+  <button class="danger" onclick="hideRawMaterialForm()">CANCEL</button>
+</div>
 <div id="rawStockCards" class="cards"></div>
 <div class="panel"><b>Material Movement</b><div id="rawStockMovement"></div></div>
 </section>
@@ -1078,7 +1093,110 @@ async function backupData(){
  }catch(e){alert("Backup failed: "+e.message)}
 }
 
+let editingRawMaterialId=null;
 
+function showRawMaterialForm(id=null){
+  editingRawMaterialId=id;
+  rawMaterialForm.style.display="block";
+
+  if(id){
+    const m=(window._rawMaterials||[]).find(x=>String(x.id)===String(id));
+    if(!m)return;
+    rawMaterialFormTitle.textContent="Edit Raw Material";
+    rawMaterialName.value=m.name;
+    rawMaterialUnit.value=m.unit;
+    rawMaterialMinStock.value=m.min_stock||0;
+  }else{
+    rawMaterialFormTitle.textContent="Add Raw Material";
+    rawMaterialName.value="";
+    rawMaterialUnit.value="kg";
+    rawMaterialMinStock.value="";
+  }
+
+  rawMaterialForm.scrollIntoView({behavior:"smooth"});
+}
+
+function hideRawMaterialForm(){
+  editingRawMaterialId=null;
+  rawMaterialForm.style.display="none";
+}
+
+async function loadRawMaterials(){
+  try{
+    const r=await api("raw_materials?select=*&active=eq.true&order=name");
+    if(!r.ok)throw Error(await r.text());
+    window._rawMaterials=await r.json();
+  }catch(e){
+    window._rawMaterials=[];
+  }
+}
+
+async function saveRawMaterial(){
+  const name=rawMaterialName.value.trim();
+  const unit=rawMaterialUnit.value;
+  const minStock=Number(rawMaterialMinStock.value)||0;
+
+  if(!name)return alert("Enter material name");
+
+  try{
+    let r;
+
+    if(editingRawMaterialId){
+      r=await api("raw_materials?id=eq."+editingRawMaterialId,{
+        method:"PATCH",
+        headers:{"Prefer":"return=minimal"},
+        body:JSON.stringify({
+          name,
+          unit,
+          min_stock:minStock,
+          updated_at:new Date().toISOString()
+        })
+      });
+    }else{
+      r=await api("raw_materials",{
+        method:"POST",
+        headers:{"Prefer":"return=minimal"},
+        body:JSON.stringify({
+          name,
+          unit,
+          min_stock:minStock
+        })
+      });
+    }
+
+    if(!r.ok)throw Error(await r.text());
+
+    hideRawMaterialForm();
+    await loadRawMaterials();
+    await loadRawStock();
+
+    alert(editingRawMaterialId?"Raw material updated.":"Raw material added.");
+  }catch(e){
+    alert("Could not save raw material: "+e.message);
+  }
+}
+
+async function deleteRawMaterial(id){
+  if(!confirm("Delete this raw material?"))return;
+
+  try{
+    const r=await api("raw_materials?id=eq."+id,{
+      method:"PATCH",
+      headers:{"Prefer":"return=minimal"},
+      body:JSON.stringify({
+        active:false,
+        updated_at:new Date().toISOString()
+      })
+    });
+
+    if(!r.ok)throw Error(await r.text());
+
+    await loadRawMaterials();
+    await loadRawStock();
+  }catch(e){
+    alert("Could not delete raw material: "+e.message);
+  }
+}
 const RAW_MATERIALS=["Cement","M-Sand","Chips","Flyash","Colour / Oxide","Other Raw Material"];
 async function loadRawStock(){
  if(CONFIG.supabaseUrl.includes("PASTE_"))return;
@@ -1094,8 +1212,18 @@ async function loadRawStock(){
       Object.entries(x.material_consumption).forEach(([m,q])=>{totals[m]=(totals[m]||0)-Number(q||0)})
     }
   });
-  rawStockCards.innerHTML=RAW_MATERIALS.map(m=>`<div class="card"><div class="label">${m}</div><div class="value">${(totals[m]||0).toLocaleString("en-IN")}</div></div>`).join("");
-  const mov=[];
+rawStockCards.innerHTML=RAW_MATERIALS.map(m=>{
+const item=(window._rawMaterials||[]).find(x=>x.name===m);
+const stock=totals[m]||0;
+return `<div class="card">
+<div class="label">${m}</div>
+<div class="value">${stock.toLocaleString("en-IN")}</div>
+<div style="display:flex;gap:6px;margin-top:8px">
+<button class="blue" onclick="editRawMaterial('${item?.id||""}')">✏️ Edit</button>
+<button class="danger" onclick="deleteRawMaterial('${item?.id||""}')">🗑️ Delete</button>
+</div>
+</div>`;
+}).join("");  const mov=[];
   purchases.forEach(x=>mov.push({date:x.purchase_date,type:"PURCHASE",material:x.material,qty:Number(x.qty||0),unit:x.unit||""}));
   productions.forEach(x=>{
     if(x.material_consumption)Object.entries(x.material_consumption).forEach(([m,q])=>mov.push({date:x.production_date,type:"CONSUMPTION",material:m,qty:-Number(q||0),unit:""}))
