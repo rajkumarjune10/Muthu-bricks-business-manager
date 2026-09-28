@@ -1219,8 +1219,7 @@ async function loadHomeDashboard(){
 }
 
 async function render(){
-priceList.innerHTML=Object.entries(PRODUCTS).map(([p,v])=>`<div class="item"><span>${p}<br><span class="small">${v[0]}</span></span><b>${money(v[1])}</b></div>`).join("");
-product.innerHTML=Object.keys(PRODUCTS).map(p=>`<option>${p}</option>`).join("");rate.value=PRODUCTS[product.value][1];
+await loadProducts();
 if(CONFIG.supabaseUrl.includes("PASTE_")){connection.textContent="Cloud setup pending";connection.className="status warn";return}
 try{
 let [cr,sr,pr]=await Promise.all([api("customers?select=*"),api("sales?select=*"),api("payments?select=*")]);
