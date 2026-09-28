@@ -833,9 +833,9 @@ async function saveProduction(){
  try{
   const consumption=getConsumption();
   const body={production_date:prodDate.value,product:prodProduct.value,qty,unit:prodUnit.value,notes:prodNotes.value||null,material_consumption:consumption};
-  const r=await api("production",{method:"POST",body});
+  const r=await api("production",{method:"POST",body:JSON.stringify(body)});
   if(!r.ok) throw new Error(await r.text());
-  const sr=await api("stock_movements",{method:"POST",body:{movement_date:prodDate.value,product:prodProduct.value,qty,unit:prodUnit.value,movement_type:"PRODUCTION",notes:prodNotes.value||null}});
+  const sr=await api("stock_movements",{method:"POST",body:JSON.stringify({movement_date:prodDate.value,product:prodProduct.value,qty,unit:prodUnit.value,movement_type:"PRODUCTION",notes:prodNotes.value||null})});
   if(!sr.ok) throw new Error(await sr.text());
   prodQty.value="";prodNotes.value="";buildConsumptionInputs();
   await loadProduction();await loadStock();await loadRawStock();await logActivity("PRODUCTION_SAVED","Production",{product:prodProduct.value,qty});
